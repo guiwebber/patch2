@@ -417,15 +417,41 @@ export async function criarPix(req, res) {
     });
   } catch (error) {
     console.error(
-      "Erro ao criar Pix:",
-      error,
+      "========== ERRO AO CRIAR PIX ==========",
     );
 
-    return res.status(400).json({
-      erro:
-        error instanceof Error
-          ? error.message
-          : "Não foi possível gerar o Pix.",
+    console.error(error);
+
+    console.error(
+      JSON.stringify(
+        {
+          message: error?.message,
+          status: error?.status,
+          cause: error?.cause,
+          apiError: error?.apiError,
+        },
+        null,
+        2,
+      ),
+    );
+
+    console.error(
+      "========================================",
+    );
+
+    const causaMercadoPago =
+      error?.cause?.[0]?.description ||
+      error?.cause?.[0]?.code ||
+      error?.apiError?.message ||
+      error?.message;
+
+    return res.status(
+      Number(error?.status) || 400,
+    ).json({
+      erro: "Não foi possível gerar o Pix.",
+      detalhes:
+        causaMercadoPago ||
+        "Erro desconhecido ao criar pagamento.",
     });
   }
 }
