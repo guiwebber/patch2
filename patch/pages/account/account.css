@@ -1,0 +1,495 @@
+.account-page {
+  min-height: 100vh;
+  padding: 70px 5%;
+  color: #382c25;
+  background: #fffaf5;
+}
+
+.account-loading {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  background: #fffaf5;
+  font-size: 18px;
+}
+
+.account-shell {
+  width: min(1200px, 100%);
+  margin: auto;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 28px;
+}
+
+.account-sidebar {
+  height: fit-content;
+  padding: 18px;
+  position: sticky;
+  top: 115px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #eadfd4;
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(67, 43, 28, 0.08);
+}
+
+.account-user-card {
+  padding: 8px 6px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eee3d8;
+}
+
+.account-user-card img,
+.account-user-card > span {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.account-user-card img {
+  object-fit: cover;
+}
+
+.account-user-card > span {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #d97706;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.account-user-card div {
+  min-width: 0;
+}
+
+.account-user-card strong,
+.account-user-card small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-user-card small {
+  margin-top: 4px;
+  color: #807066;
+}
+
+.account-sidebar > button {
+  min-height: 48px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5b4b42;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+}
+
+.account-sidebar > button:hover,
+.account-sidebar > button.active {
+  color: #b85f05;
+  background: #fff2e2;
+}
+
+.account-content {
+  min-width: 0;
+}
+
+.account-heading > span {
+  color: #b45f06;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.account-heading h1 {
+  margin-top: 8px;
+  font-size: 38px;
+}
+
+.account-alert {
+  margin-top: 22px;
+  padding: 14px 17px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.account-alert.error {
+  color: #913838;
+  background: #fff0f0;
+  border: 1px solid #f0c3c3;
+}
+
+.account-alert.success {
+  color: #25663a;
+  background: #eefbf1;
+  border: 1px solid #bfe4c8;
+}
+
+.account-card {
+  margin-top: 25px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #eadfd4;
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(67, 43, 28, 0.07);
+}
+
+.account-card-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.account-card-title svg {
+  color: #d97706;
+}
+
+.account-card-title h2 {
+  font-size: 22px;
+}
+
+.account-card-title p {
+  margin-top: 5px;
+  color: #817168;
+}
+
+.account-form-grid,
+.address-form-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.account-form-grid label,
+.address-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-form-grid label.full,
+.address-form-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.account-form-grid label > span,
+.address-form-grid label > span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-form-grid input,
+.address-form-grid input {
+  width: 100%;
+  min-height: 49px;
+  padding: 0 14px;
+  color: #3d3029;
+  background: #fffdfb;
+  border: 1px solid #ded0c5;
+  border-radius: 10px;
+  outline: none;
+}
+
+.account-form-grid input:focus,
+.address-form-grid input:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+.account-form-grid input:disabled {
+  color: #8c7e75;
+  background: #f5f1ed;
+}
+
+.account-form-grid small {
+  color: #8b7b72;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 48px;
+}
+
+.password-field button {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.account-primary-button {
+  min-height: 49px;
+  margin-top: 24px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #fff;
+  background: #d97706;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.account-primary-button:hover {
+  background: #b85f05;
+}
+
+.account-primary-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.google-password-info {
+  margin-top: 24px;
+  padding: 16px;
+  color: #68594f;
+  background: #fff6e9;
+  border: 1px solid #ecd2ae;
+  border-radius: 10px;
+  line-height: 1.55;
+}
+
+.address-toolbar {
+  margin-top: 25px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff;
+  border: 1px solid #eadfd4;
+  border-radius: 14px;
+}
+
+.address-toolbar p {
+  color: #77675d;
+}
+
+.address-toolbar button,
+.empty-addresses button {
+  min-height: 44px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  background: #d97706;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.address-grid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.address-card {
+  padding: 23px;
+  position: relative;
+  background: #fff;
+  border: 1px solid #eadfd4;
+  border-radius: 16px;
+  box-shadow: 0 12px 34px rgba(65, 42, 27, 0.07);
+}
+
+.main-address {
+  padding: 6px 9px;
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  color: #fff;
+  background: #d97706;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.address-card h3 {
+  padding-right: 75px;
+  font-size: 19px;
+}
+
+.address-card p {
+  margin-top: 7px;
+  color: #76665d;
+  line-height: 1.4;
+}
+
+.address-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 9px;
+}
+
+.address-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #a75809;
+  background: #fff4e5;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.address-actions button.delete {
+  color: #9d3939;
+  background: #fff0f0;
+}
+
+.empty-addresses {
+  margin-top: 25px;
+  padding: 70px 25px;
+  display: grid;
+  place-items: center;
+  color: #96877d;
+  background: #fff;
+  border: 1px dashed #d9c8ba;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.empty-addresses h2 {
+  margin-top: 17px;
+  color: #493a32;
+}
+
+.empty-addresses p {
+  max-width: 420px;
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+.empty-addresses button {
+  margin-top: 20px;
+}
+
+.address-modal-overlay {
+  padding: 20px;
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  background: rgba(37, 25, 18, 0.65);
+}
+
+.address-modal {
+  width: min(760px, 100%);
+  max-height: 92vh;
+  padding: 29px;
+  position: relative;
+  background: #fff;
+  border-radius: 18px;
+  overflow-y: auto;
+}
+
+.address-modal-close {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  background: #fff3e4;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.address-checkbox {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.address-checkbox input {
+  width: 19px;
+  min-height: 19px;
+}
+
+@media (max-width: 850px) {
+  .account-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .account-sidebar {
+    position: static;
+  }
+
+  .address-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .account-page {
+    padding: 45px 18px;
+  }
+
+  .account-heading h1 {
+    font-size: 32px;
+  }
+
+  .account-form-grid,
+  .address-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-form-grid label.full,
+  .address-form-grid label.full {
+    grid-column: auto;
+  }
+
+  .address-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .address-toolbar button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .address-modal-overlay {
+    padding: 0;
+    align-items: end;
+  }
+
+  .address-modal {
+    max-height: 94vh;
+    border-radius: 18px 18px 0 0;
+  }
+}

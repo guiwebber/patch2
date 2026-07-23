@@ -7,8 +7,15 @@ import {
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import { StoreProvider } from "./context/StoreContext";
+import Footer from "./components/footer/footer";
 import MenuBar from "./components/menu/menu";
+import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 
+import Account from "../pages/account/account";
+import About from "../pages/about/about";
+import Checkout from "../pages/checkout/checkout";
 import Home from "../pages/home/home";
 import Login from "../pages/login/login";
 import Signup from "../pages/signup/signup";
@@ -26,13 +33,49 @@ createRoot(document.getElementById("root")!).render(
   <GoogleOAuthProvider clientId={googleClientId}>
     <BrowserRouter>
       <AuthProvider>
-        <MenuBar />
+        <StoreProvider>
+          <CartProvider>
+            <MenuBar />
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route
+                path="/sobre"
+                element={<About />}
+              />
+
+              <Route
+                path="/minha-conta"
+                element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/login"
+                element={<Login />}
+              />
+
+              <Route
+                path="/signup"
+                element={<Signup />}
+              />
+            </Routes>
+
+            <Footer />
+          </CartProvider>
+        </StoreProvider>
       </AuthProvider>
     </BrowserRouter>
   </GoogleOAuthProvider>,

@@ -13,13 +13,17 @@ import {
 } from "@react-oauth/google";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../src/context/AuthContext";
+
 import "../login/login.css";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3001";
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3001";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { entrar } = useAuth();
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -30,10 +34,25 @@ export default function Signup() {
   const [mostrarSenha, setMostrarSenha] =
     useState(false);
   const [erro, setErro] = useState("");
+  const [carregando, setCarregando] =
+    useState(false);
   const [carregandoGoogle, setCarregandoGoogle] =
     useState(false);
 
-  function handleSubmit(
+  function tratarContaExistente(
+    status: number,
+    mensagem: string,
+  ) {
+    if (status !== 409) {
+      return false;
+    }
+
+    window.alert(mensagem);
+    navigate("/login");
+    return true;
+  }
+
+  async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
@@ -42,8 +61,8 @@ export default function Signup() {
     if (
       !nome.trim() ||
       !email.trim() ||
-      !senha.trim() ||
-      !confirmarSenha.trim()
+      !senha ||
+      !confirmarSenha
     ) {
       setErro(
         "Preencha todos os campos obrigatórios.",
@@ -63,15 +82,60 @@ export default function Signup() {
       return;
     }
 
-    console.log({
-      nome: nome.trim(),
-      telefone: telefone.trim(),
-      email: email.trim().toLowerCase(),
-      senha,
-    });
+    try {
+      setCarregando(true);
 
-    // Depois ligaremos este cadastro normal ao backend.
-    navigate("/login");
+      const response = await fetch(
+        `${API_URL}/clientes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nome: nome.trim(),
+            telefone: telefone.trim(),
+            email: email.trim().toLowerCase(),
+            senha,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const mensagem =
+          data.erro ||
+          "Não foi possível criar sua conta.";
+
+        if (
+          tratarContaExistente(
+            response.status,
+            mensagem,
+          )
+        ) {
+          return;
+        }
+
+        setErro(mensagem);
+        return;
+      }
+
+      if (!data.token || !data.cliente) {
+        setErro(
+          "O servidor não retornou os dados do cadastro.",
+        );
+        return;
+      }
+
+      entrar(data.cliente, data.token);
+      navigate("/");
+    } catch (error) {
+      console.error("Erro ao criar conta:", error);
+      setErro("Não foi possível conectar ao servidor.");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   async function handleGoogleSignup(
@@ -80,7 +144,9 @@ export default function Signup() {
     const credential = responseGoogle.credential;
 
     if (!credential) {
-      setErro("O Google não retornou uma credencial válida.");
+      setErro(
+        "O Google não retornou uma credencial válida.",
+      );
       return;
     }
 
@@ -88,49 +154,58 @@ export default function Signup() {
       setErro("");
       setCarregandoGoogle(true);
 
-      // A mesma rota serve para cadastro e login.
       const response = await fetch(
-        `${API_URL}/login/google`,
+        `${API_URL}/cadastro/google`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            credential,
-          }),
+          body: JSON.stringify({ credential }),
         },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
+        const mensagem =
           data.erro ||
-            "Não foi possível cadastrar com o Google.",
+          "Não foi possível cadastrar com o Google.";
+
+        if (
+          tratarContaExistente(
+            response.status,
+            mensagem,
+          )
+        ) {
+          return;
+        }
+
+        setErro(mensagem);
+        return;
+      }
+
+      if (!data.token || !data.cliente) {
+        setErro(
+          "O servidor não retornou os dados do cadastro.",
         );
         return;
       }
 
-      localStorage.setItem(
-        "usuario",
-        JSON.stringify(data.cliente),
-      );
-
+      entrar(data.cliente, data.token);
       navigate("/");
     } catch (error) {
       console.error(
         "Erro no cadastro Google:",
         error,
       );
-
-      setErro(
-        "Não foi possível conectar ao servidor.",
-      );
+      setErro("Não foi possível conectar ao servidor.");
     } finally {
       setCarregandoGoogle(false);
     }
   }
+
+  const bloqueado = carregando || carregandoGoogle;
 
   return (
     <main className="auth-page">
@@ -154,24 +229,17 @@ export default function Signup() {
         >
           <div className="auth-form-header">
             <h2>Cadastro</h2>
-
-            <p>
-              Preencha seus dados para começar.
-            </p>
+            <p>Preencha seus dados para começar.</p>
           </div>
 
           {erro && (
-            <div className="auth-error">
-              {erro}
-            </div>
+            <div className="auth-error">{erro}</div>
           )}
 
           <label className="auth-field">
             <span>Nome completo</span>
-
             <div className="auth-input-wrapper">
               <User size={20} />
-
               <input
                 type="text"
                 placeholder="Seu nome"
@@ -179,16 +247,15 @@ export default function Signup() {
                 onChange={(event) =>
                   setNome(event.target.value)
                 }
+                disabled={bloqueado}
               />
             </div>
           </label>
 
           <label className="auth-field">
             <span>Telefone</span>
-
             <div className="auth-input-wrapper">
               <Phone size={20} />
-
               <input
                 type="tel"
                 placeholder="(00) 00000-0000"
@@ -196,16 +263,15 @@ export default function Signup() {
                 onChange={(event) =>
                   setTelefone(event.target.value)
                 }
+                disabled={bloqueado}
               />
             </div>
           </label>
 
           <label className="auth-field">
             <span>E-mail</span>
-
             <div className="auth-input-wrapper">
               <Mail size={20} />
-
               <input
                 type="email"
                 placeholder="seuemail@exemplo.com"
@@ -213,27 +279,25 @@ export default function Signup() {
                 onChange={(event) =>
                   setEmail(event.target.value)
                 }
+                disabled={bloqueado}
               />
             </div>
           </label>
 
           <label className="auth-field">
             <span>Senha</span>
-
             <div className="auth-input-wrapper">
               <LockKeyhole size={20} />
-
               <input
                 type={
-                  mostrarSenha
-                    ? "text"
-                    : "password"
+                  mostrarSenha ? "text" : "password"
                 }
                 placeholder="Mínimo de 6 caracteres"
                 value={senha}
                 onChange={(event) =>
                   setSenha(event.target.value)
                 }
+                disabled={bloqueado}
               />
 
               <button
@@ -241,14 +305,10 @@ export default function Signup() {
                 className="auth-password-button"
                 onClick={() =>
                   setMostrarSenha(
-                    (valor) => !valor,
+                    (current) => !current,
                   )
                 }
-                aria-label={
-                  mostrarSenha
-                    ? "Ocultar senha"
-                    : "Mostrar senha"
-                }
+                disabled={bloqueado}
               >
                 {mostrarSenha ? (
                   <EyeOff size={20} />
@@ -261,15 +321,11 @@ export default function Signup() {
 
           <label className="auth-field">
             <span>Confirmar senha</span>
-
             <div className="auth-input-wrapper">
               <LockKeyhole size={20} />
-
               <input
                 type={
-                  mostrarSenha
-                    ? "text"
-                    : "password"
+                  mostrarSenha ? "text" : "password"
                 }
                 placeholder="Digite a senha novamente"
                 value={confirmarSenha}
@@ -278,6 +334,7 @@ export default function Signup() {
                     event.target.value,
                   )
                 }
+                disabled={bloqueado}
               />
             </div>
           </label>
@@ -285,8 +342,11 @@ export default function Signup() {
           <button
             type="submit"
             className="auth-submit"
+            disabled={bloqueado}
           >
-            Criar conta
+            {carregando
+              ? "Criando conta..."
+              : "Criar conta"}
           </button>
 
           <div className="auth-divider">

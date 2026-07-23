@@ -6,6 +6,7 @@ dotenv.config();
 
 import pool from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -58,6 +59,7 @@ app.get("/teste-banco", async (req, res) => {
 });
 
 app.use(authRoutes);
+app.use(profileRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({

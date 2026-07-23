@@ -11,6 +11,7 @@ import {
 } from "@react-oauth/google";
 import {
   Link,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 
@@ -22,9 +23,20 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
 
+type LoginLocationState = {
+  redirectTo?: string;
+};
+
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { entrar } = useAuth();
+
+  const locationState =
+    location.state as LoginLocationState | null;
+
+  const redirectTo =
+    locationState?.redirectTo || "/";
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -37,6 +49,19 @@ export default function Login() {
     carregandoGoogle,
     setCarregandoGoogle,
   ] = useState(false);
+
+  function concluirLogin(
+    cliente: Parameters<
+      typeof entrar
+    >[0],
+    token: string,
+  ) {
+    entrar(cliente, token);
+
+    navigate(redirectTo, {
+      replace: true,
+    });
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
@@ -57,13 +82,10 @@ export default function Login() {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            email: email
-              .trim()
-              .toLowerCase(),
+            email: email.trim().toLowerCase(),
             senha,
           }),
         },
@@ -86,9 +108,7 @@ export default function Login() {
         return;
       }
 
-      entrar(data.cliente, data.token);
-
-      navigate("/");
+      concluirLogin(data.cliente, data.token);
     } catch (error) {
       console.error(
         "Erro ao realizar login:",
@@ -125,8 +145,7 @@ export default function Login() {
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             credential,
@@ -151,9 +170,7 @@ export default function Login() {
         return;
       }
 
-      entrar(data.cliente, data.token);
-
-      navigate("/");
+      concluirLogin(data.cliente, data.token);
     } catch (error) {
       console.error(
         "Erro no login Google:",
@@ -168,6 +185,9 @@ export default function Login() {
     }
   }
 
+  const bloqueado =
+    carregando || carregandoGoogle;
+
   return (
     <main className="auth-page">
       <section className="auth-panel">
@@ -179,9 +199,8 @@ export default function Login() {
           <h1>Bem-vindo de volta</h1>
 
           <p>
-            Entre na sua conta para
-            acompanhar seus pedidos e
-            continuar suas compras.
+            Entre na sua conta para acompanhar seus
+            pedidos e continuar suas compras.
           </p>
         </div>
 
@@ -193,10 +212,15 @@ export default function Login() {
             <h2>Entrar</h2>
 
             <p>
-              Digite seus dados para
-              acessar sua conta.
+              Digite seus dados para acessar sua conta.
             </p>
           </div>
+
+          {redirectTo === "/checkout" && (
+            <div className="auth-info">
+              Entre para continuar sua compra.
+            </div>
+          )}
 
           {erro && (
             <div className="auth-error">
@@ -215,15 +239,10 @@ export default function Login() {
                 placeholder="seuemail@exemplo.com"
                 value={email}
                 onChange={(event) =>
-                  setEmail(
-                    event.target.value,
-                  )
+                  setEmail(event.target.value)
                 }
                 autoComplete="email"
-                disabled={
-                  carregando ||
-                  carregandoGoogle
-                }
+                disabled={bloqueado}
               />
             </div>
           </label>
@@ -243,15 +262,10 @@ export default function Login() {
                 placeholder="Digite sua senha"
                 value={senha}
                 onChange={(event) =>
-                  setSenha(
-                    event.target.value,
-                  )
+                  setSenha(event.target.value)
                 }
                 autoComplete="current-password"
-                disabled={
-                  carregando ||
-                  carregandoGoogle
-                }
+                disabled={bloqueado}
               />
 
               <button
@@ -267,10 +281,7 @@ export default function Login() {
                     ? "Ocultar senha"
                     : "Mostrar senha"
                 }
-                disabled={
-                  carregando ||
-                  carregandoGoogle
-                }
+                disabled={bloqueado}
               >
                 {mostrarSenha ? (
                   <EyeOff size={20} />
@@ -285,24 +296,15 @@ export default function Login() {
             <label className="auth-checkbox">
               <input
                 type="checkbox"
-                disabled={
-                  carregando ||
-                  carregandoGoogle
-                }
+                disabled={bloqueado}
               />
-
-              <span>
-                Lembrar de mim
-              </span>
+              <span>Lembrar de mim</span>
             </label>
 
             <button
               type="button"
               className="auth-link-button"
-              disabled={
-                carregando ||
-                carregandoGoogle
-              }
+              disabled={bloqueado}
             >
               Esqueci minha senha
             </button>
@@ -311,10 +313,7 @@ export default function Login() {
           <button
             type="submit"
             className="auth-submit"
-            disabled={
-              carregando ||
-              carregandoGoogle
-            }
+            disabled={bloqueado}
           >
             {carregando
               ? "Entrando..."
@@ -332,9 +331,7 @@ export default function Login() {
               </p>
             ) : (
               <GoogleLogin
-                onSuccess={
-                  handleGoogleLogin
-                }
+                onSuccess={handleGoogleLogin}
                 onError={() =>
                   setErro(
                     "O login com o Google falhou.",
@@ -351,7 +348,12 @@ export default function Login() {
 
           <p className="auth-footer">
             Ainda não tem uma conta?{" "}
-            <Link to="/signup">
+            <Link
+              to="/signup"
+              state={{
+                redirectTo,
+              }}
+            >
               Cadastre-se
             </Link>
           </p>

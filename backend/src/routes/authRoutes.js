@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   buscarUsuarioLogado,
   cadastrarCliente,
+  cadastrarGoogle,
   loginCliente,
   loginGoogle,
 } from "../controllers/authController.js";
@@ -12,6 +13,7 @@ import { autenticarUsuario } from "../middlewares/authMiddleware.js";
 const authRoutes = Router();
 
 authRoutes.post("/clientes", cadastrarCliente);
+authRoutes.post("/cadastro/google", cadastrarGoogle);
 authRoutes.post("/login", loginCliente);
 authRoutes.post("/login/google", loginGoogle);
 

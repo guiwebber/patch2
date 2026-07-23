@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-type Usuario = {
+export type Usuario = {
   id: number;
   nome: string;
   email: string;
@@ -20,6 +20,7 @@ type AuthContextData = {
   token: string | null;
   estaLogado: boolean;
   entrar: (usuario: Usuario, token: string) => void;
+  atualizarUsuario: (usuario: Usuario) => void;
   sair: () => void;
 };
 
@@ -50,16 +51,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  function entrar(usuarioRecebido: Usuario, tokenRecebido: string) {
+  function entrar(
+    usuarioRecebido: Usuario,
+    tokenRecebido: string,
+  ) {
     localStorage.setItem(
       "usuario",
       JSON.stringify(usuarioRecebido),
     );
-
     localStorage.setItem("token", tokenRecebido);
 
     setUsuario(usuarioRecebido);
     setToken(tokenRecebido);
+  }
+
+  function atualizarUsuario(usuarioAtualizado: Usuario) {
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(usuarioAtualizado),
+    );
+
+    setUsuario(usuarioAtualizado);
   }
 
   function sair() {
@@ -77,6 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         token,
         estaLogado: Boolean(usuario && token),
         entrar,
+        atualizarUsuario,
         sair,
       }}
     >

@@ -45,7 +45,8 @@ export async function cadastrarCliente(req, res) {
 
     if (clienteExistente.rows.length > 0) {
       return res.status(409).json({
-        erro: "Já existe uma conta com esse e-mail.",
+        erro: "Essa conta já está cadastrada. Faça login para continuar.",
+        codigo: "CONTA_EXISTENTE",
       });
     }
 
@@ -90,12 +91,86 @@ export async function cadastrarCliente(req, res) {
 
     if (error?.code === "23505") {
       return res.status(409).json({
-        erro: "Já existe uma conta com esse e-mail.",
+        erro: "Essa conta já está cadastrada. Faça login para continuar.",
+        codigo: "CONTA_EXISTENTE",
       });
     }
 
     return res.status(500).json({
       erro: "Erro interno ao cadastrar cliente.",
+    });
+  }
+}
+
+export async function cadastrarGoogle(req, res) {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({
+      erro: "Credencial do Google não informada.",
+    });
+  }
+
+  try {
+    const dadosGoogle = await validarTokenGoogle(credential);
+    const { googleId, nome, email, foto } = dadosGoogle;
+
+    const clienteExistente = await pool.query(
+      `
+      SELECT id
+      FROM clientes
+      WHERE google_id = $1 OR email = $2
+      LIMIT 1
+      `,
+      [googleId, email],
+    );
+
+    if (clienteExistente.rows.length > 0) {
+      return res.status(409).json({
+        erro: "Essa conta Google já está cadastrada. Faça login para continuar.",
+        codigo: "CONTA_EXISTENTE",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      INSERT INTO clientes (
+        nome,
+        telefone,
+        email,
+        senha,
+        google_id,
+        foto,
+        provedor
+      )
+      VALUES ($1, NULL, $2, NULL, $3, $4, 'google')
+      RETURNING
+        id,
+        nome,
+        telefone,
+        email,
+        foto,
+        provedor
+      `,
+      [nome, email, googleId, foto],
+    );
+
+    const cliente = result.rows[0];
+    const token = gerarToken(cliente);
+
+    return res.status(201).json({
+      mensagem: "Conta criada com Google.",
+      cliente: formatarCliente(cliente),
+      token,
+    });
+  } catch (error) {
+    console.error("Erro no cadastro Google:", error);
+
+    return res.status(401).json({
+      erro:
+        error instanceof Error
+          ? error.message
+          : "Não foi possível cadastrar com o Google.",
     });
   }
 }
@@ -141,10 +216,7 @@ export async function loginCliente(req, res) {
       });
     }
 
-    const senhaCorreta = await bcrypt.compare(
-      senha,
-      cliente.senha,
-    );
+    const senhaCorreta = await bcrypt.compare(senha, cliente.senha);
 
     if (!senhaCorreta) {
       return res.status(401).json({
@@ -178,13 +250,10 @@ export async function loginGoogle(req, res) {
   }
 
   try {
-    const dadosGoogle =
-      await validarTokenGoogle(credential);
+    const dadosGoogle = await validarTokenGoogle(credential);
+    const { googleId, email, foto } = dadosGoogle;
 
-    const { googleId, nome, email, foto } =
-      dadosGoogle;
-
-    let result = await pool.query(
+    const result = await pool.query(
       `
       SELECT
         id,
@@ -201,81 +270,48 @@ export async function loginGoogle(req, res) {
       [googleId, email],
     );
 
-    let cliente;
-    let contaCriada = false;
-
     if (result.rows.length === 0) {
-      result = await pool.query(
-        `
-        INSERT INTO clientes (
-          nome,
-          telefone,
-          email,
-          senha,
-          google_id,
-          foto,
-          provedor
-        )
-        VALUES ($1, NULL, $2, NULL, $3, $4, 'google')
-        RETURNING
-          id,
-          nome,
-          telefone,
-          email,
-          google_id,
-          foto,
-          provedor
-        `,
-        [nome, email, googleId, foto],
-      );
-
-      cliente = result.rows[0];
-      contaCriada = true;
-    } else {
-      const clienteExistente = result.rows[0];
-
-      if (
-        clienteExistente.google_id &&
-        clienteExistente.google_id !== googleId
-      ) {
-        return res.status(409).json({
-          erro: "Esse e-mail já está vinculado a outra conta Google.",
-        });
-      }
-
-      result = await pool.query(
-        `
-        UPDATE clientes
-        SET
-          google_id = COALESCE(google_id, $1),
-          foto = COALESCE($2, foto),
-          atualizado_em = NOW()
-        WHERE id = $3
-        RETURNING
-          id,
-          nome,
-          telefone,
-          email,
-          google_id,
-          foto,
-          provedor
-        `,
-        [
-          googleId,
-          foto,
-          clienteExistente.id,
-        ],
-      );
-
-      cliente = result.rows[0];
+      return res.status(404).json({
+        erro: "Essa conta Google ainda não está cadastrada.",
+        codigo: "CONTA_NAO_CADASTRADA",
+      });
     }
 
+    const clienteExistente = result.rows[0];
+
+    if (
+      clienteExistente.google_id &&
+      clienteExistente.google_id !== googleId
+    ) {
+      return res.status(409).json({
+        erro: "Esse e-mail já está vinculado a outra conta Google.",
+      });
+    }
+
+    const updated = await pool.query(
+      `
+      UPDATE clientes
+      SET
+        google_id = COALESCE(google_id, $1),
+        foto = COALESCE($2, foto),
+        atualizado_em = NOW()
+      WHERE id = $3
+      RETURNING
+        id,
+        nome,
+        telefone,
+        email,
+        foto,
+        provedor
+      `,
+      [googleId, foto, clienteExistente.id],
+    );
+
+    const cliente = updated.rows[0];
     const token = gerarToken(cliente);
 
-    return res.status(contaCriada ? 201 : 200).json({
-      mensagem: contaCriada
-        ? "Conta criada com Google."
-        : "Login com Google realizado com sucesso.",
+    return res.json({
+      mensagem: "Login com Google realizado com sucesso.",
       cliente: formatarCliente(cliente),
       token,
     });
@@ -290,6 +326,7 @@ export async function loginGoogle(req, res) {
     });
   }
 }
+
 export async function buscarUsuarioLogado(req, res) {
   try {
     const result = await pool.query(
