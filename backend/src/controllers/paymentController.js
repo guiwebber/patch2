@@ -281,12 +281,45 @@ function notificationUrl() {
     : undefined;
 }
 
+function converterStatusPagamento(statusMercadoPago) {
+  switch (statusMercadoPago) {
+    case "approved":
+      return "aprovado";
+
+    case "rejected":
+      return "rejeitado";
+
+    case "cancelled":
+    case "refunded":
+    case "charged_back":
+      return "cancelado";
+
+    case "pending":
+    case "in_process":
+    case "in_mediation":
+    case "authorized":
+    default:
+      return "pendente";
+  }
+}
+
 async function atualizarPedidoComPagamento({
   pedidoId,
   pagamento,
 }) {
-  const status = pagamento.status || "pending";
-  const aprovado = status === "approved";
+  const statusMercadoPago =
+    pagamento.status || "pending";
+
+  const statusPagamento =
+    converterStatusPagamento(
+      statusMercadoPago,
+    );
+
+  const aprovado =
+    statusPagamento === "aprovado";
+
+  const cancelado =
+    statusPagamento === "cancelado";
 
   await pool.query(
     `
@@ -298,41 +331,75 @@ async function atualizarPedidoComPagamento({
       mercado_pago_status = $4,
       mercado_pago_status_detail = $5,
       status_pagamento = $6,
+
       status = CASE
         WHEN $7 THEN 'pagamento_aprovado'
+        WHEN $8 THEN 'cancelado'
         ELSE status
       END,
-      parcelas = COALESCE($8, parcelas),
+
+      parcelas = COALESCE($9, parcelas),
+
       valor_parcela = CASE
-        WHEN COALESCE($8, 1) > 0
-          THEN ROUND(total / COALESCE($8, 1), 2)
+        WHEN COALESCE($9, 1) > 0
+          THEN ROUND(
+            total / COALESCE($9, 1),
+            2
+          )
         ELSE NULL
       END,
-      pix_qr_code = $9,
-      pix_qr_code_base64 = $10,
-      pix_expiracao = $11,
+
+      pix_qr_code = $10,
+      pix_qr_code_base64 = $11,
+      pix_expiracao = $12,
+
       pago_em = CASE
-        WHEN $7 THEN NOW()
+        WHEN $7 THEN COALESCE(pago_em, NOW())
         ELSE pago_em
       END,
+
+      cancelado_em = CASE
+        WHEN $8 THEN COALESCE(cancelado_em, NOW())
+        ELSE cancelado_em
+      END,
+
       atualizado_em = NOW()
-    WHERE id = $12
+
+    WHERE id = $13
     `,
     [
       String(pagamento.id),
-      pagamento.payment_type_id || null,
-      pagamento.payment_method_id || null,
-      status,
-      pagamento.status_detail || null,
-      aprovado ? "aprovado" : status,
+
+      pagamento.payment_type_id ||
+        null,
+
+      pagamento.payment_method_id ||
+        null,
+
+      statusMercadoPago,
+
+      pagamento.status_detail ||
+        null,
+
+      statusPagamento,
+
       aprovado,
+
+      cancelado,
+
       pagamento.installments || 1,
+
       pagamento.point_of_interaction
-        ?.transaction_data?.qr_code || null,
+        ?.transaction_data
+        ?.qr_code || null,
+
       pagamento.point_of_interaction
         ?.transaction_data
         ?.qr_code_base64 || null,
-      pagamento.date_of_expiration || null,
+
+      pagamento.date_of_expiration ||
+        null,
+
       pedidoId,
     ],
   );
