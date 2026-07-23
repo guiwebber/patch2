@@ -30,6 +30,11 @@ app.use(
 );
 
 app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`[REQUISIÇÃO] ${req.method} ${req.originalUrl}`);
+
+  next();
+});
 
 app.get("/", (req, res) => {
   return res.json({
@@ -50,10 +55,7 @@ app.get("/teste-banco", async (req, res) => {
 
     return res.status(500).json({
       ok: false,
-      erro:
-        error instanceof Error
-          ? error.message
-          : "Erro desconhecido.",
+      erro: error instanceof Error ? error.message : "Erro desconhecido.",
     });
   }
 });
