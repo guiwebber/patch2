@@ -11,9 +11,17 @@ import {
   GoogleLogin,
   type CredentialResponse,
 } from "@react-oauth/google";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { useAuth } from "../../src/context/AuthContext";
+import {
+  formatarTelefone,
+  somenteLetras,
+} from "../../src/utils/inputFormatters";
 
 import "../login/login.css";
 
@@ -21,9 +29,19 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
 
+type SignupLocationState = {
+  redirectTo?: string;
+};
+
 export default function Signup() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { entrar } = useAuth();
+
+  const state =
+    location.state as SignupLocationState | null;
+
+  const redirectTo = state?.redirectTo || "/";
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -48,8 +66,26 @@ export default function Signup() {
     }
 
     window.alert(mensagem);
-    navigate("/login");
+
+    navigate("/login", {
+      replace: true,
+      state: {
+        redirectTo,
+      },
+    });
+
     return true;
+  }
+
+  function concluirCadastro(
+    cliente: Parameters<typeof entrar>[0],
+    token: string,
+  ) {
+    entrar(cliente, token);
+
+    navigate(redirectTo, {
+      replace: true,
+    });
   }
 
   async function handleSubmit(
@@ -66,6 +102,26 @@ export default function Signup() {
     ) {
       setErro(
         "Preencha todos os campos obrigatórios.",
+      );
+      return;
+    }
+
+    if (nome.trim().length < 3) {
+      setErro(
+        "Informe um nome com pelo menos 3 caracteres.",
+      );
+      return;
+    }
+
+    const telefoneNumeros =
+      telefone.replace(/\D/g, "");
+
+    if (
+      telefoneNumeros &&
+      ![10, 11].includes(telefoneNumeros.length)
+    ) {
+      setErro(
+        "Informe um telefone válido com DDD.",
       );
       return;
     }
@@ -94,7 +150,7 @@ export default function Signup() {
           },
           body: JSON.stringify({
             nome: nome.trim(),
-            telefone: telefone.trim(),
+            telefone: telefoneNumeros,
             email: email.trim().toLowerCase(),
             senha,
           }),
@@ -128,11 +184,15 @@ export default function Signup() {
         return;
       }
 
-      entrar(data.cliente, data.token);
-      navigate("/");
+      concluirCadastro(
+        data.cliente,
+        data.token,
+      );
     } catch (error) {
       console.error("Erro ao criar conta:", error);
-      setErro("Não foi possível conectar ao servidor.");
+      setErro(
+        "Não foi possível conectar ao servidor.",
+      );
     } finally {
       setCarregando(false);
     }
@@ -141,7 +201,8 @@ export default function Signup() {
   async function handleGoogleSignup(
     responseGoogle: CredentialResponse,
   ) {
-    const credential = responseGoogle.credential;
+    const credential =
+      responseGoogle.credential;
 
     if (!credential) {
       setErro(
@@ -161,7 +222,9 @@ export default function Signup() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ credential }),
+          body: JSON.stringify({
+            credential,
+          }),
         },
       );
 
@@ -192,20 +255,26 @@ export default function Signup() {
         return;
       }
 
-      entrar(data.cliente, data.token);
-      navigate("/");
+      concluirCadastro(
+        data.cliente,
+        data.token,
+      );
     } catch (error) {
       console.error(
         "Erro no cadastro Google:",
         error,
       );
-      setErro("Não foi possível conectar ao servidor.");
+
+      setErro(
+        "Não foi possível conectar ao servidor.",
+      );
     } finally {
       setCarregandoGoogle(false);
     }
   }
 
-  const bloqueado = carregando || carregandoGoogle;
+  const bloqueado =
+    carregando || carregandoGoogle;
 
   return (
     <main className="auth-page">
@@ -229,24 +298,35 @@ export default function Signup() {
         >
           <div className="auth-form-header">
             <h2>Cadastro</h2>
-            <p>Preencha seus dados para começar.</p>
+            <p>
+              Preencha seus dados para começar.
+            </p>
           </div>
 
           {erro && (
-            <div className="auth-error">{erro}</div>
+            <div className="auth-error">
+              {erro}
+            </div>
           )}
 
           <label className="auth-field">
             <span>Nome completo</span>
+
             <div className="auth-input-wrapper">
               <User size={20} />
+
               <input
                 type="text"
                 placeholder="Seu nome"
                 value={nome}
                 onChange={(event) =>
-                  setNome(event.target.value)
+                  setNome(
+                    somenteLetras(
+                      event.target.value,
+                    ),
+                  )
                 }
+                autoComplete="name"
                 disabled={bloqueado}
               />
             </div>
@@ -254,15 +334,24 @@ export default function Signup() {
 
           <label className="auth-field">
             <span>Telefone</span>
+
             <div className="auth-input-wrapper">
               <Phone size={20} />
+
               <input
                 type="tel"
+                inputMode="numeric"
+                maxLength={15}
                 placeholder="(00) 00000-0000"
                 value={telefone}
                 onChange={(event) =>
-                  setTelefone(event.target.value)
+                  setTelefone(
+                    formatarTelefone(
+                      event.target.value,
+                    ),
+                  )
                 }
+                autoComplete="tel"
                 disabled={bloqueado}
               />
             </div>
@@ -270,8 +359,10 @@ export default function Signup() {
 
           <label className="auth-field">
             <span>E-mail</span>
+
             <div className="auth-input-wrapper">
               <Mail size={20} />
+
               <input
                 type="email"
                 placeholder="seuemail@exemplo.com"
@@ -279,6 +370,7 @@ export default function Signup() {
                 onChange={(event) =>
                   setEmail(event.target.value)
                 }
+                autoComplete="email"
                 disabled={bloqueado}
               />
             </div>
@@ -286,17 +378,22 @@ export default function Signup() {
 
           <label className="auth-field">
             <span>Senha</span>
+
             <div className="auth-input-wrapper">
               <LockKeyhole size={20} />
+
               <input
                 type={
-                  mostrarSenha ? "text" : "password"
+                  mostrarSenha
+                    ? "text"
+                    : "password"
                 }
                 placeholder="Mínimo de 6 caracteres"
                 value={senha}
                 onChange={(event) =>
                   setSenha(event.target.value)
                 }
+                autoComplete="new-password"
                 disabled={bloqueado}
               />
 
@@ -321,11 +418,15 @@ export default function Signup() {
 
           <label className="auth-field">
             <span>Confirmar senha</span>
+
             <div className="auth-input-wrapper">
               <LockKeyhole size={20} />
+
               <input
                 type={
-                  mostrarSenha ? "text" : "password"
+                  mostrarSenha
+                    ? "text"
+                    : "password"
                 }
                 placeholder="Digite a senha novamente"
                 value={confirmarSenha}
@@ -334,6 +435,7 @@ export default function Signup() {
                     event.target.value,
                   )
                 }
+                autoComplete="new-password"
                 disabled={bloqueado}
               />
             </div>
@@ -377,7 +479,14 @@ export default function Signup() {
 
           <p className="auth-footer">
             Já possui uma conta?{" "}
-            <Link to="/login">Entrar</Link>
+            <Link
+              to="/login"
+              state={{
+                redirectTo,
+              }}
+            >
+              Entrar
+            </Link>
           </p>
         </form>
       </section>

@@ -439,6 +439,21 @@
   width: 19px;
   min-height: 19px;
 }
+.address-form-grid select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 13px;
+  color: inherit;
+  background: inherit;
+  border: 1px solid currentColor;
+  border-radius: 9px;
+  outline: none;
+}
+
+.address-form-grid select:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
 
 @media (max-width: 850px) {
   .account-shell {

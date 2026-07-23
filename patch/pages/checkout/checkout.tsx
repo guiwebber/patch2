@@ -21,6 +21,13 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../src/context/AuthContext";
 import { useCart } from "../../src/context/CartContext";
+import MercadoPagoPayment from "../../src/components/payment/MercadoPagoPayment";
+import {
+  ESTADOS_BRASIL,
+  formatarCep,
+  somenteLetras,
+  somenteNumeros,
+} from "../../src/utils/inputFormatters";
 
 import "./checkout.css";
 
@@ -132,6 +139,23 @@ export default function Checkout() {
       ) || null,
     [enderecos, enderecoSelecionadoId],
   );
+
+  const valorFrete = 0;
+  const valorBase = Number(
+    (cartTotal + valorFrete).toFixed(2),
+  );
+  const acrescimoCartao = Number(
+    (valorBase * 0.05).toFixed(2),
+  );
+  const totalCartao = Number(
+    (valorBase + acrescimoCartao).toFixed(2),
+  );
+
+  const totalSelecionado =
+    paymentMethod === "credit_card" ||
+    paymentMethod === "debit_card"
+      ? totalCartao
+      : valorBase;
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -267,7 +291,13 @@ export default function Checkout() {
         {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify(enderecoForm),
+          body: JSON.stringify({
+            ...enderecoForm,
+            cep: enderecoForm.cep.replace(
+              /\D/g,
+              "",
+            ),
+          }),
         },
       );
 
@@ -322,29 +352,35 @@ export default function Checkout() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function finalizarPagamento() {
-    if (!paymentMethod) {
+  function irParaEtapa(target: Step) {
+    if (
+      (target === "revisao" ||
+        target === "pagamento") &&
+      !enderecoSelecionadoId
+    ) {
       setErro(
-        "Selecione uma forma de pagamento.",
+        "Selecione ou cadastre um endereço antes de avançar.",
       );
+      setStep("endereco");
       return;
     }
 
     setErro("");
-
-    window.alert(
-      "Pedido revisado. A integração com o Mercado Pago será conectada na próxima etapa.",
-    );
+    setStep(target);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function voltarEtapa() {
     if (step === "pagamento") {
-      setStep("revisao");
+      irParaEtapa("revisao");
       return;
     }
 
     if (step === "revisao") {
-      setStep("endereco");
+      irParaEtapa("endereco");
       return;
     }
 
@@ -382,19 +418,15 @@ export default function Checkout() {
   return (
     <main className="checkout-page">
       <section className="checkout-heading">
-        <button
-          type="button"
-          onClick={voltarEtapa}
-        >
-          <ChevronLeft size={20} />
-          Voltar
-        </button>
-
         <span>Finalizar compra</span>
         <h1>Checkout</h1>
 
         <div className="checkout-progress">
-          <div className={stepClass("endereco")}>
+          <button
+            type="button"
+            className={stepClass("endereco")}
+            onClick={() => irParaEtapa("endereco")}
+          >
             <span>
               {step !== "endereco" ? (
                 <Check size={17} />
@@ -403,11 +435,16 @@ export default function Checkout() {
               )}
             </span>
             Endereço
-          </div>
+          </button>
 
           <div className="progress-line" />
 
-          <div className={stepClass("revisao")}>
+          <button
+            type="button"
+            className={stepClass("revisao")}
+            onClick={() => irParaEtapa("revisao")}
+            disabled={!enderecoSelecionadoId}
+          >
             <span>
               {step === "pagamento" ? (
                 <Check size={17} />
@@ -416,14 +453,19 @@ export default function Checkout() {
               )}
             </span>
             Revisão
-          </div>
+          </button>
 
           <div className="progress-line" />
 
-          <div className={stepClass("pagamento")}>
+          <button
+            type="button"
+            className={stepClass("pagamento")}
+            onClick={() => irParaEtapa("pagamento")}
+            disabled={!enderecoSelecionadoId}
+          >
             <span>3</span>
             Pagamento
-          </div>
+          </button>
         </div>
       </section>
 
@@ -540,7 +582,7 @@ export default function Checkout() {
                             </p>
 
                             <small>
-                              CEP {endereco.cep}
+                              CEP {formatarCep(endereco.cep)}
                             </small>
                           </div>
                         </button>
@@ -550,17 +592,28 @@ export default function Checkout() {
                 </div>
               )}
 
-              <button
-                type="button"
-                className="checkout-primary-button"
-                onClick={continuarParaRevisao}
-                disabled={
-                  carregando ||
-                  !enderecoSelecionadoId
-                }
-              >
-                Continuar para revisão
-              </button>
+              <div className="checkout-navigation">
+                <button
+                  type="button"
+                  className="checkout-back-button"
+                  onClick={voltarEtapa}
+                >
+                  <ChevronLeft size={19} />
+                  Voltar às compras
+                </button>
+
+                <button
+                  type="button"
+                  className="checkout-primary-button"
+                  onClick={continuarParaRevisao}
+                  disabled={
+                    carregando ||
+                    !enderecoSelecionadoId
+                  }
+                >
+                  Continuar para revisão
+                </button>
+              </div>
             </section>
           )}
 
@@ -659,7 +712,7 @@ export default function Checkout() {
                   </p>
 
                   <p>
-                    CEP {enderecoSelecionado.cep}
+                    CEP {formatarCep(enderecoSelecionado.cep)}
                   </p>
 
                   <button
@@ -742,13 +795,24 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="checkout-primary-button"
-                onClick={continuarParaPagamento}
-              >
-                Continuar para pagamento
-              </button>
+              <div className="checkout-navigation">
+                <button
+                  type="button"
+                  className="checkout-back-button"
+                  onClick={() => irParaEtapa("endereco")}
+                >
+                  <ChevronLeft size={19} />
+                  Voltar para endereço
+                </button>
+
+                <button
+                  type="button"
+                  className="checkout-primary-button"
+                  onClick={continuarParaPagamento}
+                >
+                  Continuar para pagamento
+                </button>
+              </div>
             </section>
           )}
 
@@ -874,14 +938,46 @@ export default function Checkout() {
                 cartão nem o código de segurança.
               </div>
 
-              <button
-                type="button"
-                className="checkout-primary-button"
-                onClick={finalizarPagamento}
-                disabled={!paymentMethod}
-              >
-                Ir para pagamento seguro
-              </button>
+              {paymentMethod &&
+                enderecoSelecionadoId && (
+                  <MercadoPagoPayment
+                    key={paymentMethod}
+                    metodo={paymentMethod}
+                    token={token || ""}
+                    enderecoId={
+                      enderecoSelecionadoId
+                    }
+                    cart={cart}
+                    valorBase={valorBase}
+                    totalCartao={totalCartao}
+                    onPaymentCreated={(
+                      paymentId,
+                      status,
+                    ) => {
+                      console.log(
+                        "Pagamento criado:",
+                        paymentId,
+                        status,
+                      );
+                    }}
+                  />
+                )}
+
+              <div className="checkout-navigation">
+                <button
+                  type="button"
+                  className="checkout-back-button"
+                  onClick={() => irParaEtapa("revisao")}
+                >
+                  <ChevronLeft size={19} />
+                  Voltar para revisão
+                </button>
+
+                <div className="checkout-payment-hint">
+                  Selecione uma forma acima para abrir o
+                  pagamento seguro do Mercado Pago.
+                </div>
+              </div>
             </section>
           )}
         </div>
@@ -977,14 +1073,35 @@ export default function Checkout() {
 
             <div>
               <span>Frete</span>
-              <strong>A calcular</strong>
+              <strong>
+                {valorFrete === 0
+                  ? "A calcular"
+                  : formatPrice(valorFrete)}
+              </strong>
             </div>
 
+            {(paymentMethod === "credit_card" ||
+              paymentMethod === "debit_card") && (
+              <div className="summary-card-fee">
+                <span>
+                  Acréscimo do cartão (5%)
+                </span>
+
+                <strong>
+                  {formatPrice(acrescimoCartao)}
+                </strong>
+              </div>
+            )}
+
             <div className="summary-total">
-              <span>Total parcial</span>
+              <span>
+                {paymentMethod
+                  ? "Total"
+                  : "Total parcial"}
+              </span>
 
               <strong>
-                {formatPrice(cartTotal)}
+                {formatPrice(totalSelecionado)}
               </strong>
             </div>
           </div>
@@ -1043,7 +1160,9 @@ export default function Checkout() {
                       (current) => ({
                         ...current,
                         nomeDestinatario:
-                          event.target.value,
+                          somenteLetras(
+                            event.target.value,
+                          ),
                       }),
                     )
                   }
@@ -1054,12 +1173,17 @@ export default function Checkout() {
                 <span>CEP</span>
 
                 <input
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="00000-000"
                   value={enderecoForm.cep}
                   onChange={(event) =>
                     setEnderecoForm(
                       (current) => ({
                         ...current,
-                        cep: event.target.value,
+                        cep: formatarCep(
+                          event.target.value,
+                        ),
                       }),
                     )
                   }
@@ -1069,19 +1193,30 @@ export default function Checkout() {
               <label>
                 <span>Estado</span>
 
-                <input
-                  maxLength={2}
+                <select
                   value={enderecoForm.estado}
                   onChange={(event) =>
                     setEnderecoForm(
                       (current) => ({
                         ...current,
-                        estado:
-                          event.target.value.toUpperCase(),
+                        estado: event.target.value,
                       }),
                     )
                   }
-                />
+                >
+                  <option value="">
+                    Selecione
+                  </option>
+
+                  {ESTADOS_BRASIL.map((estado) => (
+                    <option
+                      key={estado.sigla}
+                      value={estado.sigla}
+                    >
+                      {estado.sigla} — {estado.nome}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="full">
@@ -1104,13 +1239,16 @@ export default function Checkout() {
                 <span>Número</span>
 
                 <input
+                  inputMode="numeric"
                   value={enderecoForm.numero}
                   onChange={(event) =>
                     setEnderecoForm(
                       (current) => ({
                         ...current,
-                        numero:
+                        numero: somenteNumeros(
                           event.target.value,
+                          8,
+                        ),
                       }),
                     )
                   }
@@ -1160,8 +1298,9 @@ export default function Checkout() {
                     setEnderecoForm(
                       (current) => ({
                         ...current,
-                        cidade:
+                        cidade: somenteLetras(
                           event.target.value,
+                        ),
                       }),
                     )
                   }

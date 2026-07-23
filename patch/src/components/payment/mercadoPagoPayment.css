@@ -1,0 +1,153 @@
+.mp-payment-box {
+  margin-top: 22px;
+  padding: 20px;
+  background: #fffdfb;
+  border: 1px solid #e4d7cd;
+  border-radius: 14px;
+}
+
+.mp-payment-error {
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  color: #963c3c;
+  background: #fff0f0;
+  border: 1px solid #efc4c4;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.mp-pix-intro,
+.mp-payment-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mp-pix-intro > svg,
+.mp-payment-status > svg {
+  flex-shrink: 0;
+  color: #d97706;
+}
+
+.mp-pix-intro strong,
+.mp-payment-status strong {
+  display: block;
+  color: #493a32;
+  font-size: 17px;
+}
+
+.mp-pix-intro p,
+.mp-payment-status span {
+  margin-top: 5px;
+  display: block;
+  color: #77675e;
+  line-height: 1.5;
+}
+
+.mp-primary-button,
+.mp-secondary-button {
+  min-height: 48px;
+  margin-top: 18px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.mp-primary-button {
+  width: 100%;
+  color: #fff;
+  background: #d97706;
+  border: 0;
+}
+
+.mp-primary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mp-secondary-button {
+  color: #b85f05;
+  background: transparent;
+  border: 1px solid #d97706;
+}
+
+.mp-pix-result {
+  display: grid;
+  justify-items: center;
+}
+
+.mp-payment-status {
+  width: 100%;
+}
+
+.mp-pix-image {
+  width: min(260px, 100%);
+  margin-top: 18px;
+  border-radius: 10px;
+}
+
+.mp-copy-field {
+  width: 100%;
+  margin-top: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.mp-copy-field span {
+  color: #493a32;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mp-copy-field textarea {
+  width: 100%;
+  min-height: 115px;
+  padding: 12px;
+  resize: vertical;
+  border: 1px solid #dcccc0;
+  border-radius: 9px;
+  outline: none;
+}
+
+.mp-expiration {
+  margin-top: 15px;
+  color: #87766c;
+}
+
+.mp-card-fee {
+  margin-bottom: 18px;
+  padding: 14px;
+  background: #fff5e7;
+  border: 1px solid #ecd0a8;
+  border-radius: 10px;
+}
+
+.mp-card-fee strong,
+.mp-card-fee span {
+  display: block;
+}
+
+.mp-card-fee strong {
+  color: #a85a0b;
+}
+
+.mp-card-fee span {
+  margin-top: 5px;
+  color: #76665c;
+  font-size: 13px;
+}
+
+.mp-spin {
+  animation: mp-spin 0.8s linear infinite;
+}
+
+@keyframes mp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

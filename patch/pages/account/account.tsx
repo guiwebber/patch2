@@ -17,6 +17,13 @@ import {
   useAuth,
   type Usuario,
 } from "../../src/context/AuthContext";
+import {
+  ESTADOS_BRASIL,
+  formatarCep,
+  formatarTelefone,
+  somenteLetras,
+  somenteNumeros,
+} from "../../src/utils/inputFormatters";
 
 import "./account.css";
 
@@ -222,6 +229,26 @@ export default function Account() {
       return;
     }
 
+    if (nome.trim().length < 3) {
+      setErro(
+        "Informe um nome com pelo menos 3 caracteres.",
+      );
+      return;
+    }
+
+    const telefoneNumeros =
+      telefone.replace(/\D/g, "");
+
+    if (
+      telefoneNumeros &&
+      ![10, 11].includes(telefoneNumeros.length)
+    ) {
+      setErro(
+        "Informe um telefone válido com DDD.",
+      );
+      return;
+    }
+
     try {
       setCarregando(true);
 
@@ -232,7 +259,7 @@ export default function Account() {
           headers: authHeaders(),
           body: JSON.stringify({
             nome: nome.trim(),
-            telefone: telefone.trim(),
+            telefone: telefone.replace(/\D/g, ""),
           }),
         },
       );
@@ -327,7 +354,7 @@ export default function Account() {
     setEnderecoForm({
       nomeDestinatario:
         endereco.nome_destinatario,
-      cep: endereco.cep,
+      cep: formatarCep(endereco.cep),
       rua: endereco.rua,
       numero: endereco.numero,
       complemento: endereco.complemento || "",
@@ -371,12 +398,20 @@ export default function Account() {
 
     if (
       camposObrigatorios.some(
-        (campo) => !campo.trim(),
+        (campo: string) => !campo.trim(),
       )
     ) {
       setErro(
         "Preencha todos os campos obrigatórios do endereço.",
       );
+      return;
+    }
+
+    if (
+      enderecoForm.cep.replace(/\D/g, "")
+        .length !== 8
+    ) {
+      setErro("Informe um CEP válido com 8 números.");
       return;
     }
 
@@ -393,7 +428,13 @@ export default function Account() {
         {
           method: editando ? "PUT" : "POST",
           headers: authHeaders(),
-          body: JSON.stringify(enderecoForm),
+          body: JSON.stringify({
+            ...enderecoForm,
+            cep: enderecoForm.cep.replace(
+              /\D/g,
+              "",
+            ),
+          }),
         },
       );
 
@@ -573,7 +614,7 @@ export default function Account() {
                       type="text"
                       value={nome}
                       onChange={(event) =>
-                        setNome(event.target.value)
+                        setNome(somenteLetras(event.target.value))
                       }
                     />
                   </label>
@@ -585,7 +626,9 @@ export default function Account() {
                       value={telefone}
                       onChange={(event) =>
                         setTelefone(
-                          event.target.value,
+                          formatarTelefone(
+                            event.target.value,
+                          ),
                         )
                       }
                       placeholder="(00) 00000-0000"
@@ -867,7 +910,9 @@ export default function Account() {
                     setEnderecoForm((current) => ({
                       ...current,
                       nomeDestinatario:
-                        event.target.value,
+                        somenteLetras(
+                          event.target.value,
+                        ),
                     }))
                   }
                 />
@@ -876,11 +921,16 @@ export default function Account() {
               <label>
                 <span>CEP</span>
                 <input
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="00000-000"
                   value={enderecoForm.cep}
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      cep: event.target.value,
+                      cep: formatarCep(
+                        event.target.value,
+                      ),
                     }))
                   }
                 />
@@ -888,17 +938,28 @@ export default function Account() {
 
               <label>
                 <span>Estado</span>
-                <input
-                  maxLength={2}
+                <select
                   value={enderecoForm.estado}
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      estado:
-                        event.target.value.toUpperCase(),
+                      estado: event.target.value,
                     }))
                   }
-                />
+                >
+                  <option value="">
+                    Selecione
+                  </option>
+
+                  {ESTADOS_BRASIL.map((estado) => (
+                    <option
+                      key={estado.sigla}
+                      value={estado.sigla}
+                    >
+                      {estado.sigla} — {estado.nome}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="full">
@@ -917,11 +978,15 @@ export default function Account() {
               <label>
                 <span>Número</span>
                 <input
+                  inputMode="numeric"
                   value={enderecoForm.numero}
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      numero: event.target.value,
+                      numero: somenteNumeros(
+                        event.target.value,
+                        8,
+                      ),
                     }))
                   }
                 />
@@ -961,7 +1026,9 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      cidade: event.target.value,
+                      cidade: somenteLetras(
+                        event.target.value,
+                      ),
                     }))
                   }
                 />

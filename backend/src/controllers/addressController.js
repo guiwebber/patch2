@@ -1,54 +1,117 @@
 import pool from "../config/db.js";
 
-function validarEndereco(body) {
-  if (!body || typeof body !== "object") {
-    return false;
-  }
+const TEXTO_ALFABETICO_REGEX =
+  /^[\p{L}\s'-]+$/u;
 
-  const camposObrigatorios = [
-    body.nomeDestinatario,
-    body.cep,
-    body.rua,
-    body.numero,
-    body.bairro,
-    body.cidade,
-    body.estado,
-  ];
+const ESTADOS_VALIDOS = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF",
+  "ES", "GO", "MA", "MT", "MS", "MG", "PA",
+  "PB", "PR", "PE", "PI", "RJ", "RN", "RS",
+  "RO", "RR", "SC", "SP", "SE", "TO",
+]);
 
-  return camposObrigatorios.every(
-    (value) =>
-      typeof value === "string" &&
-      value.trim().length > 0,
-  );
+function normalizarCep(value) {
+  return String(value ?? "")
+    .replace(/\D/g, "")
+    .slice(0, 8);
 }
 
-function formatarErroBanco(error) {
-  if (!(error instanceof Error)) {
+function limparTexto(value) {
+  return typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ")
+    : "";
+}
+
+function validarEndereco(body) {
+  if (!body || typeof body !== "object") {
     return {
-      message: String(error),
+      valido: false,
+      erro: "Dados do endereço não informados.",
+    };
+  }
+
+  const nomeDestinatario =
+    limparTexto(body.nomeDestinatario);
+  const cep = normalizarCep(body.cep);
+  const rua = limparTexto(body.rua);
+  const numero = limparTexto(body.numero);
+  const bairro = limparTexto(body.bairro);
+  const cidade = limparTexto(body.cidade);
+  const estado = limparTexto(
+    body.estado,
+  ).toUpperCase();
+
+  if (
+    !nomeDestinatario ||
+    !cep ||
+    !rua ||
+    !numero ||
+    !bairro ||
+    !cidade ||
+    !estado
+  ) {
+    return {
+      valido: false,
+      erro: "Preencha todos os campos obrigatórios.",
+    };
+  }
+
+  if (
+    !TEXTO_ALFABETICO_REGEX.test(
+      nomeDestinatario,
+    )
+  ) {
+    return {
+      valido: false,
+      erro:
+        "O nome do destinatário deve conter apenas letras.",
+    };
+  }
+
+  if (!TEXTO_ALFABETICO_REGEX.test(cidade)) {
+    return {
+      valido: false,
+      erro:
+        "A cidade deve conter apenas letras.",
+    };
+  }
+
+  if (cep.length !== 8) {
+    return {
+      valido: false,
+      erro: "Informe um CEP válido com 8 números.",
+    };
+  }
+
+  if (!/^\d+$/.test(numero)) {
+    return {
+      valido: false,
+      erro:
+        "O número do endereço deve conter apenas números.",
+    };
+  }
+
+  if (!ESTADOS_VALIDOS.has(estado)) {
+    return {
+      valido: false,
+      erro: "Selecione um estado válido.",
     };
   }
 
   return {
-    name: error.name,
-    message: error.message,
-    stack: error.stack,
-
-    code: error.code,
-    detail: error.detail,
-    hint: error.hint,
-    position: error.position,
-    internalPosition: error.internalPosition,
-    internalQuery: error.internalQuery,
-    where: error.where,
-    schema: error.schema,
-    table: error.table,
-    column: error.column,
-    dataType: error.dataType,
-    constraint: error.constraint,
-    file: error.file,
-    line: error.line,
-    routine: error.routine,
+    valido: true,
+    dados: {
+      nomeDestinatario,
+      cep,
+      rua,
+      numero,
+      complemento:
+        limparTexto(body.complemento) || null,
+      bairro,
+      cidade,
+      estado,
+      principal: Boolean(body.principal),
+    },
   };
 }
 
@@ -57,31 +120,10 @@ function responderErroBanco(
   error,
   mensagemPadrao,
 ) {
-  const erroFormatado = formatarErroBanco(error);
-
-  console.error(
-    "========== ERRO NO BANCO ==========",
-  );
-  console.error(
-    JSON.stringify(
-      erroFormatado,
-      null,
-      2,
-    ),
-  );
-  console.error(
-    "===================================",
-  );
+  console.error(mensagemPadrao, error);
 
   return res.status(500).json({
     erro: mensagemPadrao,
-
-    // Temporário para descobrir o problema.
-    // Remova estas propriedades depois que corrigir.
-    detalhes:
-      erroFormatado.message ||
-      "Erro desconhecido.",
-    codigo: erroFormatado.code || null,
   });
 }
 
@@ -124,32 +166,37 @@ export async function listarEnderecos(req, res) {
 }
 
 export async function criarEndereco(req, res) {
-  if (!validarEndereco(req.body)) {
+  const validacao = validarEndereco(req.body);
+
+  if (!validacao.valido) {
     return res.status(400).json({
-      erro: "Preencha todos os campos obrigatórios.",
+      erro: validacao.erro,
     });
   }
 
-  const {
-    nomeDestinatario,
-    cep,
-    rua,
-    numero,
-    complemento,
-    bairro,
-    cidade,
-    estado,
-    principal,
-  } = req.body;
-
+  const dados = validacao.dados;
   let client;
   let transacaoIniciada = false;
 
   try {
     client = await pool.connect();
-
     await client.query("BEGIN");
     transacaoIniciada = true;
+
+    const quantidadeResult = await client.query(
+      `
+      SELECT COUNT(*)::INTEGER AS total
+      FROM enderecos
+      WHERE cliente_id = $1
+      `,
+      [req.usuario.id],
+    );
+
+    const primeiroEndereco =
+      quantidadeResult.rows[0].total === 0;
+
+    const principal =
+      primeiroEndereco || dados.principal;
 
     if (principal) {
       await client.query(
@@ -179,43 +226,22 @@ export async function criarEndereco(req, res) {
         principal
       )
       VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8,
-        $9,
-        $10
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9, $10
       )
-      RETURNING
-        id,
-        cliente_id,
-        nome_destinatario,
-        cep,
-        rua,
-        numero,
-        complemento,
-        bairro,
-        cidade,
-        estado,
-        principal,
-        criado_em,
-        atualizado_em
+      RETURNING *
       `,
       [
         req.usuario.id,
-        nomeDestinatario.trim(),
-        cep.trim(),
-        rua.trim(),
-        numero.trim(),
-        complemento?.trim() || null,
-        bairro.trim(),
-        cidade.trim(),
-        estado.trim().toUpperCase(),
-        Boolean(principal),
+        dados.nomeDestinatario,
+        dados.cep,
+        dados.rua,
+        dados.numero,
+        dados.complemento,
+        dados.bairro,
+        dados.cidade,
+        dados.estado,
+        principal,
       ],
     );
 
@@ -229,14 +255,14 @@ export async function criarEndereco(req, res) {
     });
   } catch (error) {
     if (client && transacaoIniciada) {
-      try {
-        await client.query("ROLLBACK");
-      } catch (rollbackError) {
-        console.error(
-          "Erro ao desfazer transação:",
-          rollbackError,
-        );
-      }
+      await client
+        .query("ROLLBACK")
+        .catch((rollbackError) => {
+          console.error(
+            "Erro no rollback:",
+            rollbackError,
+          );
+        });
     }
 
     return responderErroBanco(
@@ -251,35 +277,24 @@ export async function criarEndereco(req, res) {
 
 export async function atualizarEndereco(req, res) {
   const { id } = req.params;
+  const validacao = validarEndereco(req.body);
 
-  if (!validarEndereco(req.body)) {
+  if (!validacao.valido) {
     return res.status(400).json({
-      erro: "Preencha todos os campos obrigatórios.",
+      erro: validacao.erro,
     });
   }
 
-  const {
-    nomeDestinatario,
-    cep,
-    rua,
-    numero,
-    complemento,
-    bairro,
-    cidade,
-    estado,
-    principal,
-  } = req.body;
-
+  const dados = validacao.dados;
   let client;
   let transacaoIniciada = false;
 
   try {
     client = await pool.connect();
-
     await client.query("BEGIN");
     transacaoIniciada = true;
 
-    if (principal) {
+    if (dados.principal) {
       await client.query(
         `
         UPDATE enderecos
@@ -309,31 +324,18 @@ export async function atualizarEndereco(req, res) {
       WHERE
         id = $10
         AND cliente_id = $11
-      RETURNING
-        id,
-        cliente_id,
-        nome_destinatario,
-        cep,
-        rua,
-        numero,
-        complemento,
-        bairro,
-        cidade,
-        estado,
-        principal,
-        criado_em,
-        atualizado_em
+      RETURNING *
       `,
       [
-        nomeDestinatario.trim(),
-        cep.trim(),
-        rua.trim(),
-        numero.trim(),
-        complemento?.trim() || null,
-        bairro.trim(),
-        cidade.trim(),
-        estado.trim().toUpperCase(),
-        Boolean(principal),
+        dados.nomeDestinatario,
+        dados.cep,
+        dados.rua,
+        dados.numero,
+        dados.complemento,
+        dados.bairro,
+        dados.cidade,
+        dados.estado,
+        dados.principal,
         id,
         req.usuario.id,
       ],
@@ -358,14 +360,14 @@ export async function atualizarEndereco(req, res) {
     });
   } catch (error) {
     if (client && transacaoIniciada) {
-      try {
-        await client.query("ROLLBACK");
-      } catch (rollbackError) {
-        console.error(
-          "Erro ao desfazer transação:",
-          rollbackError,
-        );
-      }
+      await client
+        .query("ROLLBACK")
+        .catch((rollbackError) => {
+          console.error(
+            "Erro no rollback:",
+            rollbackError,
+          );
+        });
     }
 
     return responderErroBanco(
@@ -380,34 +382,78 @@ export async function atualizarEndereco(req, res) {
 
 export async function excluirEndereco(req, res) {
   const { id } = req.params;
+  let client;
+  let transacaoIniciada = false;
 
   try {
-    const result = await pool.query(
+    client = await pool.connect();
+    await client.query("BEGIN");
+    transacaoIniciada = true;
+
+    const result = await client.query(
       `
       DELETE FROM enderecos
       WHERE
         id = $1
         AND cliente_id = $2
-      RETURNING id
+      RETURNING id, principal
       `,
       [id, req.usuario.id],
     );
 
     if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
+      transacaoIniciada = false;
+
       return res.status(404).json({
         erro: "Endereço não encontrado.",
       });
     }
+
+    if (result.rows[0].principal) {
+      await client.query(
+        `
+        UPDATE enderecos
+        SET
+          principal = TRUE,
+          atualizado_em = NOW()
+        WHERE id = (
+          SELECT id
+          FROM enderecos
+          WHERE cliente_id = $1
+          ORDER BY criado_em DESC
+          LIMIT 1
+        )
+        `,
+        [req.usuario.id],
+      );
+    }
+
+    await client.query("COMMIT");
+    transacaoIniciada = false;
 
     return res.json({
       mensagem:
         "Endereço excluído com sucesso.",
     });
   } catch (error) {
+    if (client && transacaoIniciada) {
+      await client
+        .query("ROLLBACK")
+        .catch((rollbackError) => {
+          console.error(
+            "Erro no rollback:",
+            rollbackError,
+          );
+        });
+    }
+
     return responderErroBanco(
       res,
       error,
       "Erro interno ao excluir endereço.",
     );
+  } finally {
+    client?.release();
   }
 }

@@ -2,6 +2,20 @@ import bcrypt from "bcryptjs";
 
 import pool from "../config/db.js";
 
+const NOME_REGEX = /^[\p{L}\s'-]+$/u;
+
+function normalizarNome(value) {
+  return typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ")
+    : "";
+}
+
+function normalizarTelefone(value) {
+  return String(value ?? "")
+    .replace(/\D/g, "")
+    .slice(0, 11);
+}
+
 export async function buscarPerfil(req, res) {
   try {
     const result = await pool.query(
@@ -40,11 +54,37 @@ export async function buscarPerfil(req, res) {
 }
 
 export async function atualizarPerfil(req, res) {
-  const { nome, telefone } = req.body;
+  const nome = normalizarNome(req.body.nome);
+  const telefone =
+    normalizarTelefone(req.body.telefone);
 
-  if (!nome?.trim()) {
+  if (!nome) {
     return res.status(400).json({
       erro: "O nome é obrigatório.",
+    });
+  }
+
+  if (nome.length < 3) {
+    return res.status(400).json({
+      erro:
+        "Informe um nome com pelo menos 3 caracteres.",
+    });
+  }
+
+  if (!NOME_REGEX.test(nome)) {
+    return res.status(400).json({
+      erro:
+        "O nome deve conter apenas letras.",
+    });
+  }
+
+  if (
+    telefone &&
+    ![10, 11].includes(telefone.length)
+  ) {
+    return res.status(400).json({
+      erro:
+        "Informe um telefone válido com DDD.",
     });
   }
 
@@ -66,8 +106,8 @@ export async function atualizarPerfil(req, res) {
         provedor
       `,
       [
-        nome.trim(),
-        telefone?.trim() || null,
+        nome,
+        telefone || null,
         req.usuario.id,
       ],
     );
@@ -79,36 +119,52 @@ export async function atualizarPerfil(req, res) {
     }
 
     return res.json({
-      mensagem: "Perfil atualizado com sucesso.",
+      mensagem:
+        "Perfil atualizado com sucesso.",
       cliente: result.rows[0],
     });
   } catch (error) {
-    console.error("Erro ao atualizar perfil:", error);
+    console.error(
+      "Erro ao atualizar perfil:",
+      error,
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao atualizar perfil.",
+      erro:
+        "Erro interno ao atualizar perfil.",
     });
   }
 }
 
 export async function alterarSenha(req, res) {
-  const { senhaAtual, novaSenha, confirmarNovaSenha } = req.body;
+  const {
+    senhaAtual,
+    novaSenha,
+    confirmarNovaSenha,
+  } = req.body;
 
-  if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
+  if (
+    !senhaAtual ||
+    !novaSenha ||
+    !confirmarNovaSenha
+  ) {
     return res.status(400).json({
-      erro: "Preencha todos os campos de senha.",
+      erro:
+        "Preencha todos os campos de senha.",
     });
   }
 
   if (novaSenha.length < 6) {
     return res.status(400).json({
-      erro: "A nova senha precisa ter pelo menos 6 caracteres.",
+      erro:
+        "A nova senha precisa ter pelo menos 6 caracteres.",
     });
   }
 
   if (novaSenha !== confirmarNovaSenha) {
     return res.status(400).json({
-      erro: "As novas senhas não coincidem.",
+      erro:
+        "As novas senhas não coincidem.",
     });
   }
 
@@ -131,9 +187,13 @@ export async function alterarSenha(req, res) {
 
     const cliente = result.rows[0];
 
-    if (!cliente.senha || cliente.provedor === "google") {
+    if (
+      !cliente.senha ||
+      cliente.provedor === "google"
+    ) {
       return res.status(400).json({
-        erro: "Contas Google não possuem senha local para alterar.",
+        erro:
+          "Contas Google não possuem senha local para alterar.",
       });
     }
 
@@ -144,11 +204,15 @@ export async function alterarSenha(req, res) {
 
     if (!senhaCorreta) {
       return res.status(401).json({
-        erro: "A senha atual está incorreta.",
+        erro:
+          "A senha atual está incorreta.",
       });
     }
 
-    const novaSenhaHash = await bcrypt.hash(novaSenha, 10);
+    const novaSenhaHash = await bcrypt.hash(
+      novaSenha,
+      10,
+    );
 
     await pool.query(
       `
@@ -162,13 +226,18 @@ export async function alterarSenha(req, res) {
     );
 
     return res.json({
-      mensagem: "Senha alterada com sucesso.",
+      mensagem:
+        "Senha alterada com sucesso.",
     });
   } catch (error) {
-    console.error("Erro ao alterar senha:", error);
+    console.error(
+      "Erro ao alterar senha:",
+      error,
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao alterar senha.",
+      erro:
+        "Erro interno ao alterar senha.",
     });
   }
 }
