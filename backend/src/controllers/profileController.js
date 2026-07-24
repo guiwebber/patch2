@@ -27,6 +27,7 @@ export async function buscarPerfil(req, res) {
         email,
         foto,
         provedor,
+        administrador,
         criado_em
       FROM clientes
       WHERE id = $1

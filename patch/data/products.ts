@@ -141,7 +141,7 @@ export const products: Product[] = [
     category: "Natal",
     description:
       "Enfeite natalino artesanal feito com tecidos temáticos.",
-    price: 29.9,
+    price: 0.14,
     image:
       "https://images.unsplash.com/photo-1482638591678-a11589a805f2?auto=format&fit=crop&w=900&q=80",
     peso: 0.15,
@@ -157,7 +157,7 @@ export const products: Product[] = [
     category: "Banheiro",
     description:
       "Conjunto decorativo com detalhes em tecido e acabamento artesanal.",
-    price: 0.1,
+    price: 0.11,
     oldPrice: 149.9,
     image:
       "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=900&q=80",

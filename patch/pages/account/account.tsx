@@ -8,16 +8,14 @@ import {
   Pencil,
   Plus,
   Save,
+  ShieldCheck,
   Trash2,
   UserRound,
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  useAuth,
-  type Usuario,
-} from "../../src/context/AuthContext";
+import { useAuth, type Usuario } from "../../src/context/AuthContext";
 import {
   ESTADOS_BRASIL,
   formatarCep,
@@ -28,9 +26,7 @@ import {
 
 import "./account.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 type Aba = "dados" | "enderecos";
 
@@ -73,45 +69,28 @@ const enderecoInicial: EnderecoForm = {
 
 export default function Account() {
   const navigate = useNavigate();
-  const {
-    usuario,
-    token,
-    estaLogado,
-    atualizarUsuario,
-    sair,
-  } = useAuth();
+  const { usuario, token, estaLogado, atualizarUsuario, sair } = useAuth();
 
   const [aba, setAba] = useState<Aba>("dados");
-  const [nome, setNome] = useState(
-    usuario?.nome || "",
-  );
-  const [telefone, setTelefone] = useState(
-    usuario?.telefone || "",
-  );
+  const [nome, setNome] = useState(usuario?.nome || "");
+  const [telefone, setTelefone] = useState(usuario?.telefone || "");
 
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
-  const [
-    confirmarNovaSenha,
-    setConfirmarNovaSenha,
-  ] = useState("");
-  const [mostrarSenhas, setMostrarSenhas] =
-    useState(false);
+  const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
+  const [mostrarSenhas, setMostrarSenhas] = useState(false);
 
-  const [enderecos, setEnderecos] = useState<
-    Endereco[]
-  >([]);
+  const [enderecos, setEnderecos] = useState<Endereco[]>([]);
   const [enderecoForm, setEnderecoForm] =
     useState<EnderecoForm>(enderecoInicial);
-  const [enderecoEditandoId, setEnderecoEditandoId] =
-    useState<number | null>(null);
-  const [mostrarFormulario, setMostrarFormulario] =
-    useState(false);
+  const [enderecoEditandoId, setEnderecoEditandoId] = useState<number | null>(
+    null,
+  );
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] =
-    useState(false);
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
     if (!estaLogado || !token) {
@@ -130,9 +109,7 @@ export default function Account() {
     };
   }
 
-  async function tratarRespostaNaoAutorizada(
-    response: Response,
-  ) {
+  async function tratarRespostaNaoAutorizada(response: Response) {
     if (response.status !== 401) {
       return false;
     }
@@ -146,34 +123,31 @@ export default function Account() {
     if (!token) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/perfil`,
-        {
-          headers: authHeaders(),
-        },
-      );
+      const response = await fetch(`${API_URL}/perfil`, {
+        headers: authHeaders(),
+      });
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível carregar o perfil.",
-        );
+        setErro(data.erro || "Não foi possível carregar o perfil.");
         return;
       }
-
       const cliente = data.cliente as Usuario;
 
-      setNome(cliente.nome);
-      setTelefone(cliente.telefone || "");
-      atualizarUsuario(cliente);
+      const clienteAtualizado: Usuario = {
+        ...usuario,
+        ...cliente,
+        administrador: cliente.administrador ?? usuario?.administrador ?? false,
+      };
+
+      setNome(clienteAtualizado.nome);
+      setTelefone(clienteAtualizado.telefone || "");
+      atualizarUsuario(clienteAtualizado);
     } catch (error) {
       console.error(error);
       setErro("Não foi possível conectar ao servidor.");
@@ -184,26 +158,18 @@ export default function Account() {
     if (!token) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/enderecos`,
-        {
-          headers: authHeaders(),
-        },
-      );
+      const response = await fetch(`${API_URL}/enderecos`, {
+        headers: authHeaders(),
+      });
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível carregar os endereços.",
-        );
+        setErro(data.erro || "Não foi possível carregar os endereços.");
         return;
       }
 
@@ -219,9 +185,7 @@ export default function Account() {
     setMensagem("");
   }
 
-  async function salvarDados(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function salvarDados(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     limparAvisos();
 
@@ -231,53 +195,37 @@ export default function Account() {
     }
 
     if (nome.trim().length < 3) {
-      setErro(
-        "Informe um nome com pelo menos 3 caracteres.",
-      );
+      setErro("Informe um nome com pelo menos 3 caracteres.");
       return;
     }
 
-    const telefoneNumeros =
-      telefone.replace(/\D/g, "");
+    const telefoneNumeros = telefone.replace(/\D/g, "");
 
-    if (
-      telefoneNumeros &&
-      ![10, 11].includes(telefoneNumeros.length)
-    ) {
-      setErro(
-        "Informe um telefone válido com DDD.",
-      );
+    if (telefoneNumeros && ![10, 11].includes(telefoneNumeros.length)) {
+      setErro("Informe um telefone válido com DDD.");
       return;
     }
 
     try {
       setCarregando(true);
 
-      const response = await fetch(
-        `${API_URL}/perfil`,
-        {
-          method: "PATCH",
-          headers: authHeaders(),
-          body: JSON.stringify({
-            nome: nome.trim(),
-            telefone: telefone.replace(/\D/g, ""),
-          }),
-        },
-      );
+      const response = await fetch(`${API_URL}/perfil`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          nome: nome.trim(),
+          telefone: telefone.replace(/\D/g, ""),
+        }),
+      });
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível atualizar o perfil.",
-        );
+        setErro(data.erro || "Não foi possível atualizar o perfil.");
         return;
       }
 
@@ -291,17 +239,11 @@ export default function Account() {
     }
   }
 
-  async function salvarSenha(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function salvarSenha(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     limparAvisos();
 
-    if (
-      !senhaAtual ||
-      !novaSenha ||
-      !confirmarNovaSenha
-    ) {
+    if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
       setErro("Preencha todos os campos de senha.");
       return;
     }
@@ -309,32 +251,24 @@ export default function Account() {
     try {
       setCarregando(true);
 
-      const response = await fetch(
-        `${API_URL}/perfil/senha`,
-        {
-          method: "PATCH",
-          headers: authHeaders(),
-          body: JSON.stringify({
-            senhaAtual,
-            novaSenha,
-            confirmarNovaSenha,
-          }),
-        },
-      );
+      const response = await fetch(`${API_URL}/perfil/senha`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          senhaAtual,
+          novaSenha,
+          confirmarNovaSenha,
+        }),
+      });
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível alterar a senha.",
-        );
+        setErro(data.erro || "Não foi possível alterar a senha.");
         return;
       }
 
@@ -353,8 +287,7 @@ export default function Account() {
   function editarEndereco(endereco: Endereco) {
     setEnderecoEditandoId(endereco.id);
     setEnderecoForm({
-      nomeDestinatario:
-        endereco.nome_destinatario,
+      nomeDestinatario: endereco.nome_destinatario,
       cep: formatarCep(endereco.cep),
       rua: endereco.rua,
       numero: endereco.numero,
@@ -381,9 +314,7 @@ export default function Account() {
     setEnderecoForm(enderecoInicial);
   }
 
-  async function salvarEndereco(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function salvarEndereco(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     limparAvisos();
 
@@ -397,27 +328,17 @@ export default function Account() {
       enderecoForm.estado,
     ];
 
-    if (
-      camposObrigatorios.some(
-        (campo: string) => !campo.trim(),
-      )
-    ) {
-      setErro(
-        "Preencha todos os campos obrigatórios do endereço.",
-      );
+    if (camposObrigatorios.some((campo: string) => !campo.trim())) {
+      setErro("Preencha todos os campos obrigatórios do endereço.");
       return;
     }
 
-    if (
-      enderecoForm.cep.replace(/\D/g, "")
-        .length !== 8
-    ) {
+    if (enderecoForm.cep.replace(/\D/g, "").length !== 8) {
       setErro("Informe um CEP válido com 8 números.");
       return;
     }
 
-    const editando =
-      enderecoEditandoId !== null;
+    const editando = enderecoEditandoId !== null;
 
     try {
       setCarregando(true);
@@ -431,27 +352,19 @@ export default function Account() {
           headers: authHeaders(),
           body: JSON.stringify({
             ...enderecoForm,
-            cep: enderecoForm.cep.replace(
-              /\D/g,
-              "",
-            ),
+            cep: enderecoForm.cep.replace(/\D/g, ""),
           }),
         },
       );
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível salvar o endereço.",
-        );
+        setErro(data.erro || "Não foi possível salvar o endereço.");
         return;
       }
 
@@ -467,36 +380,26 @@ export default function Account() {
   }
 
   async function excluirEndereco(id: number) {
-    const confirmar = window.confirm(
-      "Deseja realmente excluir este endereço?",
-    );
+    const confirmar = window.confirm("Deseja realmente excluir este endereço?");
 
     if (!confirmar) return;
 
     limparAvisos();
 
     try {
-      const response = await fetch(
-        `${API_URL}/enderecos/${id}`,
-        {
-          method: "DELETE",
-          headers: authHeaders(),
-        },
-      );
+      const response = await fetch(`${API_URL}/enderecos/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
 
-      if (
-        await tratarRespostaNaoAutorizada(response)
-      ) {
+      if (await tratarRespostaNaoAutorizada(response)) {
         return;
       }
 
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(
-          data.erro ||
-            "Não foi possível excluir o endereço.",
-        );
+        setErro(data.erro || "Não foi possível excluir o endereço.");
         return;
       }
 
@@ -509,11 +412,7 @@ export default function Account() {
   }
 
   if (!usuario) {
-    return (
-      <main className="account-loading">
-        Carregando sua conta...
-      </main>
-    );
+    return <main className="account-loading">Carregando sua conta...</main>;
   }
 
   return (
@@ -528,11 +427,7 @@ export default function Account() {
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span>
-                {usuario.nome
-                  .charAt(0)
-                  .toUpperCase()}
-              </span>
+              <span>{usuario.nome.charAt(0).toUpperCase()}</span>
             )}
 
             <div>
@@ -543,9 +438,7 @@ export default function Account() {
 
           <button
             type="button"
-            className={
-              aba === "dados" ? "active" : ""
-            }
+            className={aba === "dados" ? "active" : ""}
             onClick={() => {
               setAba("dados");
               limparAvisos();
@@ -557,9 +450,7 @@ export default function Account() {
 
           <button
             type="button"
-            className={
-              aba === "enderecos" ? "active" : ""
-            }
+            className={aba === "enderecos" ? "active" : ""}
             onClick={() => {
               setAba("enderecos");
               limparAvisos();
@@ -569,36 +460,30 @@ export default function Account() {
             Endereços
           </button>
 
-          <button
-            type="button"
-            onClick={() => navigate("/meus-pedidos")}
-          >
+          <button type="button" onClick={() => navigate("/meus-pedidos")}>
             <PackageSearch size={20} />
             Meus pedidos
           </button>
+
+          {usuario?.administrador && (
+            <button type="button" onClick={() => navigate("/admin")}>
+              <ShieldCheck size={20} />
+              Painel administrativo
+            </button>
+          )}
         </aside>
 
         <section className="account-content">
           <div className="account-heading">
             <span>Minha conta</span>
             <h1>
-              {aba === "dados"
-                ? "Informações pessoais"
-                : "Meus endereços"}
+              {aba === "dados" ? "Informações pessoais" : "Meus endereços"}
             </h1>
           </div>
 
-          {erro && (
-            <div className="account-alert error">
-              {erro}
-            </div>
-          )}
+          {erro && <div className="account-alert error">{erro}</div>}
 
-          {mensagem && (
-            <div className="account-alert success">
-              {mensagem}
-            </div>
-          )}
+          {mensagem && <div className="account-alert success">{mensagem}</div>}
 
           {aba === "dados" ? (
             <>
@@ -610,9 +495,7 @@ export default function Account() {
                   <UserRound size={22} />
                   <div>
                     <h2>Dados da conta</h2>
-                    <p>
-                      Atualize seu nome e telefone.
-                    </p>
+                    <p>Atualize seu nome e telefone.</p>
                   </div>
                 </div>
 
@@ -634,11 +517,7 @@ export default function Account() {
                       type="tel"
                       value={telefone}
                       onChange={(event) =>
-                        setTelefone(
-                          formatarTelefone(
-                            event.target.value,
-                          ),
-                        )
+                        setTelefone(formatarTelefone(event.target.value))
                       }
                       placeholder="(00) 00000-0000"
                     />
@@ -646,15 +525,8 @@ export default function Account() {
 
                   <label className="full">
                     <span>E-mail</span>
-                    <input
-                      type="email"
-                      value={usuario.email}
-                      disabled
-                    />
-                    <small>
-                      O e-mail não pode ser alterado por
-                      aqui.
-                    </small>
+                    <input type="email" value={usuario.email} disabled />
+                    <small>O e-mail não pode ser alterado por aqui.</small>
                   </label>
                 </div>
 
@@ -664,9 +536,7 @@ export default function Account() {
                   disabled={carregando}
                 >
                   <Save size={19} />
-                  {carregando
-                    ? "Salvando..."
-                    : "Salvar alterações"}
+                  {carregando ? "Salvando..." : "Salvar alterações"}
                 </button>
               </form>
 
@@ -678,18 +548,14 @@ export default function Account() {
                   <KeyRound size={22} />
                   <div>
                     <h2>Alterar senha</h2>
-                    <p>
-                      Use uma senha segura com pelo menos
-                      seis caracteres.
-                    </p>
+                    <p>Use uma senha segura com pelo menos seis caracteres.</p>
                   </div>
                 </div>
 
                 {usuario.provedor === "google" ? (
                   <div className="google-password-info">
-                    Sua conta utiliza login com Google e
-                    não possui uma senha local para
-                    alterar.
+                    Sua conta utiliza login com Google e não possui uma senha
+                    local para alterar.
                   </div>
                 ) : (
                   <>
@@ -698,25 +564,16 @@ export default function Account() {
                         <span>Senha atual</span>
                         <div className="password-field">
                           <input
-                            type={
-                              mostrarSenhas
-                                ? "text"
-                                : "password"
-                            }
+                            type={mostrarSenhas ? "text" : "password"}
                             value={senhaAtual}
                             onChange={(event) =>
-                              setSenhaAtual(
-                                event.target.value,
-                              )
+                              setSenhaAtual(event.target.value)
                             }
                           />
                           <button
                             type="button"
                             onClick={() =>
-                              setMostrarSenhas(
-                                (current) =>
-                                  !current,
-                              )
+                              setMostrarSenhas((current) => !current)
                             }
                           >
                             {mostrarSenhas ? (
@@ -731,33 +588,19 @@ export default function Account() {
                       <label>
                         <span>Nova senha</span>
                         <input
-                          type={
-                            mostrarSenhas
-                              ? "text"
-                              : "password"
-                          }
+                          type={mostrarSenhas ? "text" : "password"}
                           value={novaSenha}
-                          onChange={(event) =>
-                            setNovaSenha(
-                              event.target.value,
-                            )
-                          }
+                          onChange={(event) => setNovaSenha(event.target.value)}
                         />
                       </label>
 
                       <label>
                         <span>Confirmar nova senha</span>
                         <input
-                          type={
-                            mostrarSenhas
-                              ? "text"
-                              : "password"
-                          }
+                          type={mostrarSenhas ? "text" : "password"}
                           value={confirmarNovaSenha}
                           onChange={(event) =>
-                            setConfirmarNovaSenha(
-                              event.target.value,
-                            )
+                            setConfirmarNovaSenha(event.target.value)
                           }
                         />
                       </label>
@@ -778,15 +621,9 @@ export default function Account() {
           ) : (
             <>
               <div className="address-toolbar">
-                <p>
-                  Cadastre os locais usados para entrega
-                  dos seus pedidos.
-                </p>
+                <p>Cadastre os locais usados para entrega dos seus pedidos.</p>
 
-                <button
-                  type="button"
-                  onClick={novoEndereco}
-                >
+                <button type="button" onClick={novoEndereco}>
                   <Plus size={19} />
                   Novo endereço
                 </button>
@@ -797,46 +634,31 @@ export default function Account() {
                   <MapPin size={58} />
                   <h2>Nenhum endereço cadastrado</h2>
                   <p>
-                    Adicione seu primeiro endereço para
-                    facilitar futuras compras.
+                    Adicione seu primeiro endereço para facilitar futuras
+                    compras.
                   </p>
-                  <button
-                    type="button"
-                    onClick={novoEndereco}
-                  >
+                  <button type="button" onClick={novoEndereco}>
                     Cadastrar endereço
                   </button>
                 </div>
               ) : (
                 <div className="address-grid">
                   {enderecos.map((endereco) => (
-                    <article
-                      className="address-card"
-                      key={endereco.id}
-                    >
+                    <article className="address-card" key={endereco.id}>
                       {endereco.principal && (
-                        <span className="main-address">
-                          Principal
-                        </span>
+                        <span className="main-address">Principal</span>
                       )}
 
-                      <h3>
-                        {endereco.nome_destinatario}
-                      </h3>
+                      <h3>{endereco.nome_destinatario}</h3>
 
                       <p>
-                        {endereco.rua},{" "}
-                        {endereco.numero}
+                        {endereco.rua}, {endereco.numero}
                       </p>
 
-                      {endereco.complemento && (
-                        <p>{endereco.complemento}</p>
-                      )}
+                      {endereco.complemento && <p>{endereco.complemento}</p>}
 
                       <p>
-                        {endereco.bairro} —{" "}
-                        {endereco.cidade}/
-                        {endereco.estado}
+                        {endereco.bairro} — {endereco.cidade}/{endereco.estado}
                       </p>
 
                       <p>CEP: {endereco.cep}</p>
@@ -844,9 +666,7 @@ export default function Account() {
                       <div className="address-actions">
                         <button
                           type="button"
-                          onClick={() =>
-                            editarEndereco(endereco)
-                          }
+                          onClick={() => editarEndereco(endereco)}
                         >
                           <Pencil size={17} />
                           Editar
@@ -855,11 +675,7 @@ export default function Account() {
                         <button
                           type="button"
                           className="delete"
-                          onClick={() =>
-                            excluirEndereco(
-                              endereco.id,
-                            )
-                          }
+                          onClick={() => excluirEndereco(endereco.id)}
                         >
                           <Trash2 size={17} />
                           Excluir
@@ -882,9 +698,7 @@ export default function Account() {
           <form
             className="address-modal"
             onSubmit={salvarEndereco}
-            onMouseDown={(event) =>
-              event.stopPropagation()
-            }
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <button
               type="button"
@@ -898,13 +712,9 @@ export default function Account() {
               <MapPin size={22} />
               <div>
                 <h2>
-                  {enderecoEditandoId
-                    ? "Editar endereço"
-                    : "Novo endereço"}
+                  {enderecoEditandoId ? "Editar endereço" : "Novo endereço"}
                 </h2>
-                <p>
-                  Preencha os dados usados para entrega.
-                </p>
+                <p>Preencha os dados usados para entrega.</p>
               </div>
             </div>
 
@@ -912,16 +722,11 @@ export default function Account() {
               <label className="full">
                 <span>Nome do destinatário</span>
                 <input
-                  value={
-                    enderecoForm.nomeDestinatario
-                  }
+                  value={enderecoForm.nomeDestinatario}
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      nomeDestinatario:
-                        somenteLetras(
-                          event.target.value,
-                        ),
+                      nomeDestinatario: somenteLetras(event.target.value),
                     }))
                   }
                 />
@@ -937,9 +742,7 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      cep: formatarCep(
-                        event.target.value,
-                      ),
+                      cep: formatarCep(event.target.value),
                     }))
                   }
                 />
@@ -956,15 +759,10 @@ export default function Account() {
                     }))
                   }
                 >
-                  <option value="">
-                    Selecione
-                  </option>
+                  <option value="">Selecione</option>
 
                   {ESTADOS_BRASIL.map((estado) => (
-                    <option
-                      key={estado.sigla}
-                      value={estado.sigla}
-                    >
+                    <option key={estado.sigla} value={estado.sigla}>
                       {estado.sigla} — {estado.nome}
                     </option>
                   ))}
@@ -992,10 +790,7 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      numero: somenteNumeros(
-                        event.target.value,
-                        8,
-                      ),
+                      numero: somenteNumeros(event.target.value, 8),
                     }))
                   }
                 />
@@ -1008,8 +803,7 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      complemento:
-                        event.target.value,
+                      complemento: event.target.value,
                     }))
                   }
                 />
@@ -1035,9 +829,7 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      cidade: somenteLetras(
-                        event.target.value,
-                      ),
+                      cidade: somenteLetras(event.target.value),
                     }))
                   }
                 />
@@ -1050,14 +842,11 @@ export default function Account() {
                   onChange={(event) =>
                     setEnderecoForm((current) => ({
                       ...current,
-                      principal:
-                        event.target.checked,
+                      principal: event.target.checked,
                     }))
                   }
                 />
-                <span>
-                  Usar como endereço principal
-                </span>
+                <span>Usar como endereço principal</span>
               </label>
             </div>
 
@@ -1067,9 +856,7 @@ export default function Account() {
               disabled={carregando}
             >
               <Save size={19} />
-              {carregando
-                ? "Salvando..."
-                : "Salvar endereço"}
+              {carregando ? "Salvando..." : "Salvar endereço"}
             </button>
           </form>
         </div>

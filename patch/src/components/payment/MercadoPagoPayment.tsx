@@ -3,6 +3,7 @@ import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { CheckCircle2, Clipboard, LoaderCircle, QrCode } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { useCart } from "../../context/CartContext";
 import type { CartItem } from "../../../types/product";
 
 import "./mercadoPagoPayment.css";
@@ -85,6 +86,7 @@ export default function MercadoPagoPayment({
   onPaymentCreated,
 }: MercadoPagoPaymentProps) {
   const navigate = useNavigate();
+  const { clearCart } = useCart();
 
   const [pix, setPix] = useState<PixResponse | null>(null);
 
@@ -127,6 +129,9 @@ export default function MercadoPagoPayment({
         }
 
         if ("pedido" in data && data.pedido.status_pagamento === "aprovado") {
+          clearCart();
+          localStorage.removeItem("patchwork:cart");
+
           navigate(`/meus-pedidos?pedido=${data.pedido.id}`, {
             replace: true,
             state: {
@@ -162,7 +167,7 @@ export default function MercadoPagoPayment({
     return () => {
       window.clearInterval(intervalo);
     };
-  }, [pix?.pedidoId, token, navigate]);
+  }, [pix?.pedidoId, token, navigate, clearCart]);
 
   const valorDoBrick = useMemo(
     () => Number((metodo === "pix" ? valorBase : totalCartao).toFixed(2)),
@@ -171,6 +176,9 @@ export default function MercadoPagoPayment({
 
   function abrirPedido(pedidoId: number, paymentId: string, status: string) {
     onPaymentCreated?.(paymentId, status);
+
+    clearCart();
+    localStorage.removeItem("patchwork:cart");
 
     navigate(`/meus-pedidos?pedido=${pedidoId}`, {
       replace: true,
