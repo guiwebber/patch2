@@ -1,4 +1,6 @@
-import { Router } from "express";
+import {
+  Router,
+} from "express";
 
 import {
   criarPagamentoCartao,
@@ -8,7 +10,8 @@ import {
   autenticarUsuario,
 } from "../middlewares/authMiddleware.js";
 
-const paymentRoutes = Router();
+const paymentRoutes =
+  Router();
 
 paymentRoutes.use(
   autenticarUsuario,

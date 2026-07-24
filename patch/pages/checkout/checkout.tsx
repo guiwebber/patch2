@@ -12,6 +12,7 @@ import {
   MapPin,
   PackageCheck,
   Plus,
+  Truck,
   Save,
   ShoppingBag,
   WalletCards,
@@ -44,6 +45,14 @@ type PaymentMethod =
   | "pix"
   | "credit_card"
   | "debit_card";
+
+type OpcaoFrete = {
+  id: string;
+  servico: string;
+  transportadora: string;
+  valor: number;
+  prazoDias: number;
+};
 
 type Endereco = {
   id: number;
@@ -131,6 +140,19 @@ export default function Checkout() {
 
   const [erro, setErro] = useState("");
 
+  const [opcoesFrete, setOpcoesFrete] =
+    useState<OpcaoFrete[]>([]);
+
+  const [
+    freteSelecionadoId,
+    setFreteSelecionadoId,
+  ] = useState<string | null>(null);
+
+  const [
+    calculandoFrete,
+    setCalculandoFrete,
+  ] = useState(false);
+
   const enderecoSelecionado = useMemo(
     () =>
       enderecos.find(
@@ -140,7 +162,22 @@ export default function Checkout() {
     [enderecos, enderecoSelecionadoId],
   );
 
-  const valorFrete = 0;
+  const freteSelecionado =
+    useMemo(
+      () =>
+        opcoesFrete.find(
+          (opcao) =>
+            opcao.id ===
+            freteSelecionadoId,
+        ) || null,
+      [
+        opcoesFrete,
+        freteSelecionadoId,
+      ],
+    );
+
+  const valorFrete =
+    freteSelecionado?.valor || 0;
   const valorBase = Number(
     (cartTotal + valorFrete).toFixed(2),
   );
@@ -156,6 +193,11 @@ export default function Checkout() {
     paymentMethod === "debit_card"
       ? totalCartao
       : valorBase;
+
+  useEffect(() => {
+    setOpcoesFrete([]);
+    setFreteSelecionadoId(null);
+  }, [enderecoSelecionadoId]);
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -333,6 +375,81 @@ export default function Checkout() {
     }
   }
 
+  async function calcularFrete() {
+    if (!enderecoSelecionado) {
+      setErro(
+        "Selecione um endereço para calcular o frete.",
+      );
+      return;
+    }
+
+    try {
+      setCalculandoFrete(true);
+      setErro("");
+      setFreteSelecionadoId(null);
+
+      const response = await fetch(
+        `${API_URL}/fretes/cotacao`,
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            cepDestino:
+              enderecoSelecionado.cep,
+            itens: cart.map(
+              (item) => ({
+                produtoId:
+                  item.product.id,
+                quantidade:
+                  item.quantity,
+              }),
+            ),
+          }),
+        },
+      );
+
+      if (
+        await tratarNaoAutorizado(
+          response,
+        )
+      ) {
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.erro ||
+            "Não foi possível calcular o frete.",
+        );
+      }
+
+      const opcoes =
+        (data.opcoes ||
+          []) as OpcaoFrete[];
+
+      setOpcoesFrete(opcoes);
+
+      if (opcoes.length > 0) {
+        setFreteSelecionadoId(
+          opcoes[0].id,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível calcular o frete.",
+      );
+    } finally {
+      setCalculandoFrete(false);
+    }
+  }
+
   function continuarParaRevisao() {
     if (!enderecoSelecionadoId) {
       setErro(
@@ -347,6 +464,13 @@ export default function Checkout() {
   }
 
   function continuarParaPagamento() {
+    if (!freteSelecionado) {
+      setErro(
+        "Calcule e selecione uma opção de frete.",
+      );
+      return;
+    }
+
     setErro("");
     setStep("pagamento");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -774,6 +898,86 @@ export default function Checkout() {
                 </div>
               </div>
 
+              <div className="review-shipping">
+                <div className="review-block-title">
+                  <Truck size={20} />
+                  <strong>
+                    Opções de frete
+                  </strong>
+                </div>
+
+                <button
+                  type="button"
+                  className="shipping-calculate-button"
+                  onClick={() =>
+                    void calcularFrete()
+                  }
+                  disabled={
+                    calculandoFrete ||
+                    !enderecoSelecionado
+                  }
+                >
+                  {calculandoFrete
+                    ? "Calculando..."
+                    : opcoesFrete.length > 0
+                      ? "Calcular novamente"
+                      : "Calcular frete"}
+                </button>
+
+                {opcoesFrete.length > 0 && (
+                  <div className="shipping-options">
+                    {opcoesFrete.map(
+                      (opcao) => {
+                        const selecionada =
+                          freteSelecionadoId ===
+                          opcao.id;
+
+                        return (
+                          <button
+                            type="button"
+                            key={opcao.id}
+                            className={
+                              selecionada
+                                ? "shipping-option selected"
+                                : "shipping-option"
+                            }
+                            onClick={() =>
+                              setFreteSelecionadoId(
+                                opcao.id,
+                              )
+                            }
+                          >
+                            <span className="shipping-radio">
+                              {selecionada && (
+                                <Check size={15} />
+                              )}
+                            </span>
+
+                            <div>
+                              <strong>
+                                {opcao.servico}
+                              </strong>
+                              <small>
+                                {opcao.transportadora}
+                                {" · "}
+                                aproximadamente{" "}
+                                {opcao.prazoDias} dias úteis
+                              </small>
+                            </div>
+
+                            <strong>
+                              {formatPrice(
+                                opcao.valor,
+                              )}
+                            </strong>
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="review-total">
                 <div>
                   <span>Subtotal</span>
@@ -784,13 +988,19 @@ export default function Checkout() {
 
                 <div>
                   <span>Frete</span>
-                  <strong>A calcular</strong>
+                  <strong>
+                    {freteSelecionado
+                      ? formatPrice(
+                          freteSelecionado.valor,
+                        )
+                      : "A calcular"}
+                  </strong>
                 </div>
 
                 <div>
                   <span>Total parcial</span>
                   <strong>
-                    {formatPrice(cartTotal)}
+                    {formatPrice(valorBase)}
                   </strong>
                 </div>
               </div>
@@ -809,6 +1019,7 @@ export default function Checkout() {
                   type="button"
                   className="checkout-primary-button"
                   onClick={continuarParaPagamento}
+                  disabled={!freteSelecionado}
                 >
                   Continuar para pagamento
                 </button>
@@ -950,6 +1161,10 @@ export default function Checkout() {
                     cart={cart}
                     valorBase={valorBase}
                     totalCartao={totalCartao}
+                    freteId={
+                      freteSelecionado?.id ||
+                      ""
+                    }
                     onPaymentCreated={(
                       paymentId,
                       status,
@@ -1074,9 +1289,9 @@ export default function Checkout() {
             <div>
               <span>Frete</span>
               <strong>
-                {valorFrete === 0
-                  ? "A calcular"
-                  : formatPrice(valorFrete)}
+                {freteSelecionado
+                  ? formatPrice(valorFrete)
+                  : "A calcular"}
               </strong>
             </div>
 
@@ -1107,9 +1322,9 @@ export default function Checkout() {
           </div>
 
           <p className="summary-note">
-            O frete da SuperFrete e o prazo de
-            transporte serão conectados na próxima
-            etapa.
+            {freteSelecionado
+              ? `${freteSelecionado.servico} · aproximadamente ${freteSelecionado.prazoDias} dias úteis após a postagem.`
+              : "Calcule e selecione o frete na etapa de revisão."}
           </p>
         </aside>
       </section>

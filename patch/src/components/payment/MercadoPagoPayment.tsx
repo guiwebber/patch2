@@ -25,6 +25,7 @@ type MercadoPagoPaymentProps = {
   cart: CartItem[];
   valorBase: number;
   totalCartao: number;
+  freteId: string;
   onPaymentCreated?: (paymentId: string, status: string) => void;
 };
 
@@ -83,6 +84,7 @@ export default function MercadoPagoPayment({
   cart,
   valorBase,
   totalCartao,
+  freteId,
   onPaymentCreated,
 }: MercadoPagoPaymentProps) {
   const navigate = useNavigate();
@@ -207,7 +209,7 @@ export default function MercadoPagoPayment({
 
           itens: itensDoCarrinho(cart),
 
-          valorFrete: 0,
+          freteId,
         }),
       });
 
@@ -294,7 +296,7 @@ export default function MercadoPagoPayment({
 
           itens: itensDoCarrinho(cart),
 
-          valorFrete: 0,
+          freteId,
 
           metodoSelecionado: metodo,
 

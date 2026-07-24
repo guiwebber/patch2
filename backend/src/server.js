@@ -12,6 +12,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 
+import shippingRoutes from "./routes/shippingRoutes.js";
 const app = express();
 
 const PORT =
@@ -123,6 +124,7 @@ app.use(paymentRoutes);
 app.use(orderRoutes);
 app.use(adminRoutes);
 
+app.use(shippingRoutes);
 app.use((req, res) => {
   return res.status(404).json({
     erro:

@@ -5,6 +5,9 @@ import { buscarProduto } from "../data/products.js";
 import {
   criarPagamentoMercadoPago,
 } from "../services/mercadoPagoService.js";
+import {
+  validarOpcaoFrete,
+} from "../services/superFreteService.js";
 
 const PERCENTUAL_CARTAO = 5;
 
@@ -161,6 +164,7 @@ async function criarPedidoNoBanco({
   metodoPagamento,
   parcelas,
   idempotencyKey,
+  frete,
 }) {
   const client = await pool.connect();
 
@@ -181,6 +185,9 @@ async function criarPedidoNoBanco({
         total,
         metodo_pagamento,
         parcelas,
+        servico_frete,
+        transportadora,
+        prazo_entrega_dias,
         endereco_entrega,
         idempotency_key
       )
@@ -196,8 +203,11 @@ async function criarPedidoNoBanco({
         $6,
         $7,
         $8,
-        $9::jsonb,
-        $10
+        $9,
+        $10,
+        $11,
+        $12::jsonb,
+        $13
       )
       RETURNING
         id,
@@ -212,6 +222,9 @@ async function criarPedidoNoBanco({
         valores.total,
         metodoPagamento,
         parcelas || 1,
+        frete.servico,
+        frete.transportadora,
+        frete.prazoDias,
         JSON.stringify(endereco),
         idempotencyKey,
       ],
@@ -410,23 +423,30 @@ export async function criarPix(req, res) {
     const {
       enderecoId,
       itens: itensRecebidos,
-      valorFrete,
+      freteId,
     } = req.body;
 
     const itens =
       montarItensConfiaveis(itensRecebidos);
-
-    const valores = calcularValores({
-      itens,
-      valorFrete,
-      comAcrescimoCartao: false,
-    });
 
     const { cliente, endereco } =
       await buscarClienteEEndereco({
         clienteId: req.usuario.id,
         enderecoId,
       });
+
+    const frete =
+      await validarOpcaoFrete({
+        cepDestino: endereco.cep,
+        itens: itensRecebidos,
+        freteId,
+      });
+
+    const valores = calcularValores({
+      itens,
+      valorFrete: frete.valor,
+      comAcrescimoCartao: false,
+    });
 
     const idempotencyKey =
       crypto.randomUUID();
@@ -439,6 +459,7 @@ export async function criarPix(req, res) {
       metodoPagamento: "pix",
       parcelas: 1,
       idempotencyKey,
+      frete,
     });
 
     const body = {
@@ -481,6 +502,7 @@ export async function criarPix(req, res) {
         pagamento.date_of_expiration ||
         null,
       total: valores.total,
+      frete,
     });
   } catch (error) {
     console.error(
@@ -531,7 +553,7 @@ export async function criarPagamentoCartao(
     const {
       enderecoId,
       itens: itensRecebidos,
-      valorFrete,
+      freteId,
       dadosPagamento,
     } = req.body;
 
@@ -548,17 +570,24 @@ export async function criarPagamentoCartao(
     const itens =
       montarItensConfiaveis(itensRecebidos);
 
-    const valores = calcularValores({
-      itens,
-      valorFrete,
-      comAcrescimoCartao: true,
-    });
-
     const { cliente, endereco } =
       await buscarClienteEEndereco({
         clienteId: req.usuario.id,
         enderecoId,
       });
+
+    const frete =
+      await validarOpcaoFrete({
+        cepDestino: endereco.cep,
+        itens: itensRecebidos,
+        freteId,
+      });
+
+    const valores = calcularValores({
+      itens,
+      valorFrete: frete.valor,
+      comAcrescimoCartao: true,
+    });
 
     const parcelas = Math.max(
       1,
@@ -578,6 +607,7 @@ export async function criarPagamentoCartao(
       metodoPagamento: "cartao",
       parcelas,
       idempotencyKey,
+      frete,
     });
 
     const body = {
@@ -624,6 +654,7 @@ export async function criarPagamentoCartao(
         valores.acrescimoPagamento,
       percentualAcrescimo:
         valores.percentualAcrescimo,
+      frete,
     });
   } catch (error) {
     console.error(
