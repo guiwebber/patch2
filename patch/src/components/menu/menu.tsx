@@ -13,7 +13,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-
+import Logo from "../../assets/logo.png";
 import { categories } from "../../../data/products";
 import { useAuth } from "../../context/AuthContext";
 import { useStore } from "../../context/StoreContext";
@@ -125,7 +125,7 @@ export default function MenuBar() {
             className="menu-logo"
             onClick={goHome}
           >
-            PatchWork
+            <img className="menu-logo-img" src={Logo} alt="PatchWork" />
           </button>
 
           <div className="menu-desktop">

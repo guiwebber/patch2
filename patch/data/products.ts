@@ -11,6 +11,12 @@ export const products: Product[] = [
     oldPrice: 109.9,
     image:
       "https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1518709594023-6eab9bab7b23?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1602874801006-e26c8c8e6a70?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1603561596112-db1d35a40d4f?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+    ],
     featured: true,
     peso: 0.6,
     altura: 8,
@@ -28,6 +34,11 @@ export const products: Product[] = [
     price: 34.9,
     image:
       "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.2,
     altura: 4,
     largura: 25,
@@ -45,6 +56,11 @@ export const products: Product[] = [
     oldPrice: 94.9,
     image:
       "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.7,
     altura: 8,
     largura: 32,
@@ -61,6 +77,11 @@ export const products: Product[] = [
     price: 54.9,
     image:
       "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1579656381226-5fc0f0100c3b?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=85",
+    ],
     featured: true,
     peso: 0.5,
     altura: 12,
@@ -78,6 +99,11 @@ export const products: Product[] = [
     price: 119.9,
     image:
       "https://images.unsplash.com/photo-1559563458-527698bf5295?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1559563458-527698bf5295?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.9,
     altura: 12,
     largura: 32,
@@ -95,6 +121,11 @@ export const products: Product[] = [
     oldPrice: 52.9,
     image:
       "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1564422170194-896b89110ef8?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.25,
     altura: 8,
     largura: 15,
@@ -111,6 +142,11 @@ export const products: Product[] = [
     price: 64.9,
     image:
       "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1559454403-b8fb88521f11?auto=format&fit=crop&w=1200&q=85",
+    ],
     featured: true,
     peso: 0.45,
     altura: 28,
@@ -128,6 +164,11 @@ export const products: Product[] = [
     price: 98.9,
     image:
       "https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.65,
     altura: 8,
     largura: 20,
@@ -144,6 +185,11 @@ export const products: Product[] = [
     price: 0.14,
     image:
       "https://images.unsplash.com/photo-1482638591678-a11589a805f2?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1482638591678-a11589a805f2?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 0.15,
     altura: 5,
     largura: 15,
@@ -161,6 +207,11 @@ export const products: Product[] = [
     oldPrice: 149.9,
     image:
       "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=900&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=85",
+    ],
     peso: 1.2,
     altura: 14,
     largura: 38,

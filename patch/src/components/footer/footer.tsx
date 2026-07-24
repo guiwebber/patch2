@@ -5,7 +5,7 @@ import {
   Phone,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import Logo from "../../assets/logo.png";
 import "./footer.css";
 
 export default function Footer() {
@@ -31,7 +31,7 @@ export default function Footer() {
             type="button"
             onClick={() => navigate("/")}
           >
-            PatchWork
+            <img className="footer-logo" src={Logo} alt="PatchWork" />
           </button>
 
           <p>

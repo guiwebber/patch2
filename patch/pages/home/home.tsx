@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Heart,
   Minus,
@@ -19,6 +21,34 @@ import { categories, products } from "../../data/products";
 import type { Product } from "../../types/product";
 
 import "./home.css";
+
+const heroSlides = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=1400&q=85",
+    label: "Feito à mão",
+    title: "Peças exclusivas",
+    description:
+      "Produção artesanal e acabamento delicado.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=85",
+    label: "Detalhes que encantam",
+    title: "Cuidado em cada ponto",
+    description:
+      "Tecidos escolhidos com carinho para transformar ambientes.",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85",
+    label: "Arte em tecidos",
+    title: "Sua casa mais acolhedora",
+    description:
+      "Peças feitas sob encomenda para combinar com o seu estilo.",
+  },
+];
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -45,7 +75,36 @@ export default function Home() {
     useState<Product | null>(null);
   const [modalQuantity, setModalQuantity] =
     useState(1);
-  const [cartOpen, setCartOpen] = useState(false);
+
+  const [modalImageIndex, setModalImageIndex] =
+    useState(0);
+
+  const [heroIndex, setHeroIndex] =
+    useState(0);
+
+  const [cartOpen, setCartOpen] =
+    useState(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHeroIndex((current) =>
+        (current + 1) % heroSlides.length,
+      );
+    }, 5000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow =
+      selectedProduct ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedProduct]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -64,11 +123,48 @@ export default function Home() {
   function openProduct(product: Product) {
     setSelectedProduct(product);
     setModalQuantity(1);
+    setModalImageIndex(0);
   }
 
   function closeProduct() {
     setSelectedProduct(null);
     setModalQuantity(1);
+    setModalImageIndex(0);
+  }
+
+  function changeHero(direction: "previous" | "next") {
+    setHeroIndex((current) => {
+      if (direction === "previous") {
+        return current === 0
+          ? heroSlides.length - 1
+          : current - 1;
+      }
+
+      return (current + 1) % heroSlides.length;
+    });
+  }
+
+  function changeModalImage(
+    direction: "previous" | "next",
+  ) {
+    if (!selectedProduct) {
+      return;
+    }
+
+    const images =
+      selectedProduct.images?.length
+        ? selectedProduct.images
+        : [selectedProduct.image];
+
+    setModalImageIndex((current) => {
+      if (direction === "previous") {
+        return current === 0
+          ? images.length - 1
+          : current - 1;
+      }
+
+      return (current + 1) % images.length;
+    });
   }
 
   function handleAddToCart(
@@ -139,12 +235,59 @@ export default function Home() {
         </div>
 
         <div className="hero-art">
+          {heroSlides.map((slide, index) => (
+            <img
+              key={slide.image}
+              src={slide.image}
+              alt={slide.title}
+              className={
+                index === heroIndex
+                  ? "hero-slide active"
+                  : "hero-slide"
+              }
+            />
+          ))}
+
+          <div className="hero-art-overlay" />
+
+          <button
+            type="button"
+            className="hero-arrow hero-arrow-left"
+            onClick={() => changeHero("previous")}
+            aria-label="Imagem anterior"
+          >
+            <ChevronLeft size={25} />
+          </button>
+
+          <button
+            type="button"
+            className="hero-arrow hero-arrow-right"
+            onClick={() => changeHero("next")}
+            aria-label="Próxima imagem"
+          >
+            <ChevronRight size={25} />
+          </button>
+
           <div className="hero-art-card">
-            <span>Feito à mão</span>
-            <strong>Peças exclusivas</strong>
-            <p>
-              Produção artesanal e acabamento delicado.
-            </p>
+            <span>{heroSlides[heroIndex].label}</span>
+            <strong>{heroSlides[heroIndex].title}</strong>
+            <p>{heroSlides[heroIndex].description}</p>
+          </div>
+
+          <div className="hero-dots">
+            {heroSlides.map((slide, index) => (
+              <button
+                type="button"
+                key={slide.image}
+                className={
+                  index === heroIndex
+                    ? "hero-dot active"
+                    : "hero-dot"
+                }
+                onClick={() => setHeroIndex(index)}
+                aria-label={`Abrir imagem ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -403,11 +546,81 @@ export default function Home() {
               <X size={24} />
             </button>
 
-            <div className="modal-image">
-              <img
-                src={selectedProduct.image}
-                alt={selectedProduct.name}
-              />
+            <div className="modal-gallery">
+              <div className="modal-main-image">
+                <img
+                  key={modalImageIndex}
+                  src={
+                    selectedProduct.images?.[
+                      modalImageIndex
+                    ] || selectedProduct.image
+                  }
+                  alt={`${selectedProduct.name} - foto ${
+                    modalImageIndex + 1
+                  }`}
+                />
+
+                {(selectedProduct.images?.length || 1) >
+                  1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="gallery-arrow gallery-arrow-left"
+                      onClick={() =>
+                        changeModalImage("previous")
+                      }
+                      aria-label="Foto anterior"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="gallery-arrow gallery-arrow-right"
+                      onClick={() =>
+                        changeModalImage("next")
+                      }
+                      aria-label="Próxima foto"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+
+                    <span className="gallery-counter">
+                      {modalImageIndex + 1}/
+                      {selectedProduct.images?.length}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <div className="modal-thumbnails">
+                {(
+                  selectedProduct.images?.length
+                    ? selectedProduct.images
+                    : [selectedProduct.image]
+                ).map((image, index) => (
+                  <button
+                    type="button"
+                    key={`${image}-${index}`}
+                    className={
+                      index === modalImageIndex
+                        ? "modal-thumbnail active"
+                        : "modal-thumbnail"
+                    }
+                    onClick={() =>
+                      setModalImageIndex(index)
+                    }
+                    aria-label={`Selecionar foto ${
+                      index + 1
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt=""
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="modal-content">
