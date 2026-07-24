@@ -251,8 +251,9 @@ export async function atualizarStatusPedidoAdmin(
   req,
   res,
 ) {
-  const pedidoId =
-    Number(req.params.id);
+  const pedidoId = Number(
+    req.params.id,
+  );
 
   const {
     status,
@@ -260,12 +261,9 @@ export async function atualizarStatusPedidoAdmin(
     urlRastreio,
   } = req.body;
 
-  if (
-    !Number.isInteger(pedidoId)
-  ) {
+  if (!Number.isInteger(pedidoId)) {
     return res.status(400).json({
-      erro:
-        "ID do pedido inválido.",
+      erro: "ID do pedido inválido.",
     });
   }
 
@@ -274,17 +272,19 @@ export async function atualizarStatusPedidoAdmin(
 
   if (!statusNormalizado) {
     return res.status(400).json({
-      erro:
-        "Status do pedido inválido.",
+      erro: "Status do pedido inválido.",
     });
   }
 
+  const codigoRastreioNormalizado =
+    String(codigoRastreio || "").trim();
+
+  const urlRastreioNormalizada =
+    String(urlRastreio || "").trim();
+
   if (
-    statusNormalizado ===
-      "enviado" &&
-    !String(
-      codigoRastreio || "",
-    ).trim()
+    statusNormalizado === "enviado" &&
+    !codigoRastreioNormalizado
   ) {
     return res.status(400).json({
       erro:
@@ -292,92 +292,91 @@ export async function atualizarStatusPedidoAdmin(
     });
   }
 
+  if (
+    urlRastreioNormalizada &&
+    !/^https?:\/\//i.test(
+      urlRastreioNormalizada,
+    )
+  ) {
+    return res.status(400).json({
+      erro:
+        "O link de rastreio precisa começar com http:// ou https://.",
+    });
+  }
+
   try {
-    const result =
-      await pool.query(
-        `
-        UPDATE pedidos
-        SET
-          status = $1,
+    const result = await pool.query(
+      `
+      UPDATE pedidos
+      SET
+        status = $1::varchar,
 
-          codigo_rastreio =
-            CASE
-              WHEN $1 = 'enviado'
-                THEN $2
-              ELSE codigo_rastreio
-            END,
+        codigo_rastreio = CASE
+          WHEN $1::varchar = 'enviado'
+            THEN $2::varchar
+          ELSE codigo_rastreio
+        END,
 
-          url_rastreio =
-            CASE
-              WHEN $1 = 'enviado'
-                THEN $3
-              ELSE url_rastreio
-            END,
+        url_rastreio = CASE
+          WHEN $1::varchar = 'enviado'
+            THEN $3::text
+          ELSE url_rastreio
+        END,
 
-          enviado_em =
-            CASE
-              WHEN $1 = 'enviado'
-                THEN COALESCE(
-                  enviado_em,
-                  NOW()
-                )
-              ELSE enviado_em
-            END,
+        enviado_em = CASE
+          WHEN $1::varchar = 'enviado'
+            THEN COALESCE(
+              enviado_em,
+              NOW()
+            )
+          ELSE enviado_em
+        END,
 
-          entregue_em =
-            CASE
-              WHEN $1 = 'entregue'
-                THEN COALESCE(
-                  entregue_em,
-                  NOW()
-                )
-              ELSE entregue_em
-            END,
+        entregue_em = CASE
+          WHEN $1::varchar = 'entregue'
+            THEN COALESCE(
+              entregue_em,
+              NOW()
+            )
+          ELSE entregue_em
+        END,
 
-          cancelado_em =
-            CASE
-              WHEN $1 = 'cancelado'
-                THEN COALESCE(
-                  cancelado_em,
-                  NOW()
-                )
-              ELSE cancelado_em
-            END,
+        cancelado_em = CASE
+          WHEN $1::varchar = 'cancelado'
+            THEN COALESCE(
+              cancelado_em,
+              NOW()
+            )
+          ELSE cancelado_em
+        END,
 
-          atualizado_em = NOW()
+        atualizado_em = NOW()
 
-        WHERE id = $4
+      WHERE id = $4::integer
 
-        RETURNING
-          id,
-          numero_pedido,
-          status,
-          status_pagamento,
-          codigo_rastreio,
-          url_rastreio,
-          enviado_em,
-          entregue_em,
-          cancelado_em,
-          atualizado_em
-        `,
-        [
-          statusNormalizado,
-          String(
-            codigoRastreio || "",
-          ).trim() || null,
-          String(
-            urlRastreio || "",
-          ).trim() || null,
-          pedidoId,
-        ],
-      );
+      RETURNING
+        id,
+        numero_pedido,
+        status,
+        status_pagamento,
+        codigo_rastreio,
+        url_rastreio,
+        enviado_em,
+        entregue_em,
+        cancelado_em,
+        atualizado_em
+      `,
+      [
+        statusNormalizado,
+        codigoRastreioNormalizado || null,
+        urlRastreioNormalizada || null,
+        pedidoId,
+      ],
+    );
 
-    if (
-      result.rows.length === 0
-    ) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
-        erro:
-          "Pedido não encontrado.",
+        erro: "Pedido não encontrado.",
       });
     }
 
@@ -389,12 +388,24 @@ export async function atualizarStatusPedidoAdmin(
   } catch (error) {
     console.error(
       "Erro ao atualizar pedido pelo admin:",
-      error,
+      {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        detail: error?.detail,
+        position: error?.position,
+        stack: error?.stack,
+      },
     );
 
     return res.status(500).json({
       erro:
         "Erro interno ao atualizar o pedido.",
+      detalhes:
+        process.env.NODE_ENV ===
+        "development"
+          ? error?.message
+          : undefined,
     });
   }
 }
