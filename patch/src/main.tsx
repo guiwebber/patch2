@@ -19,10 +19,12 @@ import {
 import {
   StoreProvider,
 } from "./context/StoreContext";
+import AdminRoute from "./components/adminRoute/AdminRoute";
 import Footer from "./components/footer/footer";
 import MenuBar from "./components/menu/menu";
 
 import Account from "../pages/account/account";
+import Admin from "../pages/admin/admin";
 import About from "../pages/about/about";
 import Checkout from "../pages/checkout/checkout";
 import Home from "../pages/home/home";
@@ -41,7 +43,9 @@ if (!googleClientId) {
 }
 
 createRoot(
-  document.getElementById("root")!,
+  document.getElementById(
+    "root",
+  )!,
 ).render(
   <GoogleOAuthProvider
     clientId={googleClientId}
@@ -87,6 +91,15 @@ createRoot(
                 path="/signup"
                 element={<Signup />}
               />
+
+              <Route
+                element={<AdminRoute />}
+              >
+                <Route
+                  path="/admin"
+                  element={<Admin />}
+                />
+              </Route>
             </Routes>
 
             <Footer />

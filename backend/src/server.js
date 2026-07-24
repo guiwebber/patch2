@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import pool from "./config/db.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -12,6 +13,7 @@ import profileRoutes from "./routes/profileRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 
 const app = express();
+
 const PORT =
   process.env.PORT || 3001;
 
@@ -44,6 +46,7 @@ app.use(
         ),
       );
     },
+
     methods: [
       "GET",
       "POST",
@@ -52,6 +55,7 @@ app.use(
       "DELETE",
       "OPTIONS",
     ],
+
     allowedHeaders: [
       "Content-Type",
       "Authorization",
@@ -109,9 +113,7 @@ app.get(
 );
 
 /*
- * O webhook não usa o JWT do cliente,
- * por isso fica antes das rotas
- * autenticadas.
+ * O webhook não usa o JWT do cliente.
  */
 app.use(webhookRoutes);
 
@@ -119,10 +121,12 @@ app.use(authRoutes);
 app.use(profileRoutes);
 app.use(paymentRoutes);
 app.use(orderRoutes);
+app.use(adminRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({
-    erro: "Rota não encontrada.",
+    erro:
+      "Rota não encontrada.",
   });
 });
 

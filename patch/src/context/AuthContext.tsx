@@ -13,40 +13,81 @@ export type Usuario = {
   telefone?: string | null;
   foto?: string | null;
   provedor?: string;
+  administrador?: boolean;
 };
 
 type AuthContextData = {
   usuario: Usuario | null;
   token: string | null;
   estaLogado: boolean;
-  entrar: (usuario: Usuario, token: string) => void;
-  atualizarUsuario: (usuario: Usuario) => void;
+  ehAdministrador: boolean;
+  entrar: (
+    usuario: Usuario,
+    token: string,
+  ) => void;
+  atualizarUsuario: (
+    usuario: Usuario,
+  ) => void;
   sair: () => void;
 };
 
-const AuthContext = createContext<AuthContextData | undefined>(
-  undefined,
-);
+const AuthContext =
+  createContext<
+    AuthContextData | undefined
+  >(undefined);
 
 type AuthProviderProps = {
   children: ReactNode;
 };
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
+  const [
+    usuario,
+    setUsuario,
+  ] = useState<Usuario | null>(
+    null,
+  );
+
+  const [
+    token,
+    setToken,
+  ] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
-    const usuarioSalvo = localStorage.getItem("usuario");
-    const tokenSalvo = localStorage.getItem("token");
+    const usuarioSalvo =
+      localStorage.getItem(
+        "usuario",
+      );
 
-    if (usuarioSalvo && tokenSalvo) {
+    const tokenSalvo =
+      localStorage.getItem(
+        "token",
+      );
+
+    if (
+      usuarioSalvo &&
+      tokenSalvo
+    ) {
       try {
-        setUsuario(JSON.parse(usuarioSalvo));
+        setUsuario(
+          JSON.parse(
+            usuarioSalvo,
+          ),
+        );
+
         setToken(tokenSalvo);
       } catch {
-        localStorage.removeItem("usuario");
-        localStorage.removeItem("token");
+        localStorage.removeItem(
+          "usuario",
+        );
+
+        localStorage.removeItem(
+          "token",
+        );
       }
     }
   }, []);
@@ -57,26 +98,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
   ) {
     localStorage.setItem(
       "usuario",
-      JSON.stringify(usuarioRecebido),
+      JSON.stringify(
+        usuarioRecebido,
+      ),
     );
-    localStorage.setItem("token", tokenRecebido);
 
-    setUsuario(usuarioRecebido);
-    setToken(tokenRecebido);
+    localStorage.setItem(
+      "token",
+      tokenRecebido,
+    );
+
+    setUsuario(
+      usuarioRecebido,
+    );
+
+    setToken(
+      tokenRecebido,
+    );
   }
 
-  function atualizarUsuario(usuarioAtualizado: Usuario) {
+  function atualizarUsuario(
+    usuarioAtualizado: Usuario,
+  ) {
     localStorage.setItem(
       "usuario",
-      JSON.stringify(usuarioAtualizado),
+      JSON.stringify(
+        usuarioAtualizado,
+      ),
     );
 
-    setUsuario(usuarioAtualizado);
+    setUsuario(
+      usuarioAtualizado,
+    );
   }
 
   function sair() {
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("token");
+    localStorage.removeItem(
+      "usuario",
+    );
+
+    localStorage.removeItem(
+      "token",
+    );
 
     setUsuario(null);
     setToken(null);
@@ -87,7 +150,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       value={{
         usuario,
         token,
-        estaLogado: Boolean(usuario && token),
+        estaLogado:
+          Boolean(
+            usuario &&
+            token,
+          ),
+        ehAdministrador:
+          Boolean(
+            usuario
+              ?.administrador,
+          ),
         entrar,
         atualizarUsuario,
         sair,
@@ -99,7 +171,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
 
   if (!context) {
     throw new Error(

@@ -1,8 +1,12 @@
 import bcrypt from "bcryptjs";
 
 import pool from "../config/db.js";
-import { validarTokenGoogle } from "../services/googleAuthService.js";
-import { gerarToken } from "../services/tokenService.js";
+import {
+  validarTokenGoogle,
+} from "../services/googleAuthService.js";
+import {
+  gerarToken,
+} from "../services/tokenService.js";
 
 function formatarCliente(cliente) {
   return {
@@ -12,45 +16,67 @@ function formatarCliente(cliente) {
     email: cliente.email,
     foto: cliente.foto,
     provedor: cliente.provedor,
+    administrador:
+      Boolean(cliente.administrador),
   };
 }
 
-export async function cadastrarCliente(req, res) {
-  const { nome, telefone, email, senha } = req.body;
+export async function cadastrarCliente(
+  req,
+  res,
+) {
+  const {
+    nome,
+    telefone,
+    email,
+    senha,
+  } = req.body;
 
-  if (!nome?.trim() || !email?.trim() || !senha) {
+  if (
+    !nome?.trim() ||
+    !email?.trim() ||
+    !senha
+  ) {
     return res.status(400).json({
-      erro: "Nome, e-mail e senha são obrigatórios.",
+      erro:
+        "Nome, e-mail e senha são obrigatórios.",
     });
   }
 
   if (senha.length < 6) {
     return res.status(400).json({
-      erro: "A senha precisa ter pelo menos 6 caracteres.",
+      erro:
+        "A senha precisa ter pelo menos 6 caracteres.",
     });
   }
 
-  const emailNormalizado = email.trim().toLowerCase();
+  const emailNormalizado =
+    email.trim().toLowerCase();
 
   try {
-    const clienteExistente = await pool.query(
-      `
-      SELECT id
-      FROM clientes
-      WHERE email = $1
-      LIMIT 1
-      `,
-      [emailNormalizado],
-    );
+    const clienteExistente =
+      await pool.query(
+        `
+        SELECT id
+        FROM clientes
+        WHERE email = $1
+        LIMIT 1
+        `,
+        [emailNormalizado],
+      );
 
-    if (clienteExistente.rows.length > 0) {
+    if (
+      clienteExistente.rows.length > 0
+    ) {
       return res.status(409).json({
-        erro: "Essa conta já está cadastrada. Faça login para continuar.",
+        erro:
+          "Essa conta já está cadastrada. Faça login para continuar.",
         codigo: "CONTA_EXISTENTE",
       });
     }
 
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
+    const senhaCriptografada =
+      await bcrypt.hash(senha, 10);
 
     const result = await pool.query(
       `
@@ -61,14 +87,21 @@ export async function cadastrarCliente(req, res) {
         senha,
         provedor
       )
-      VALUES ($1, $2, $3, $4, 'email')
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        'email'
+      )
       RETURNING
         id,
         nome,
         telefone,
         email,
         foto,
-        provedor
+        provedor,
+        administrador
       `,
       [
         nome.trim(),
@@ -82,52 +115,78 @@ export async function cadastrarCliente(req, res) {
     const token = gerarToken(cliente);
 
     return res.status(201).json({
-      mensagem: "Cliente cadastrado com sucesso.",
-      cliente: formatarCliente(cliente),
+      mensagem:
+        "Cliente cadastrado com sucesso.",
+      cliente:
+        formatarCliente(cliente),
       token,
     });
   } catch (error) {
-    console.error("Erro ao cadastrar cliente:", error);
+    console.error(
+      "Erro ao cadastrar cliente:",
+      error,
+    );
 
     if (error?.code === "23505") {
       return res.status(409).json({
-        erro: "Essa conta já está cadastrada. Faça login para continuar.",
+        erro:
+          "Essa conta já está cadastrada. Faça login para continuar.",
         codigo: "CONTA_EXISTENTE",
       });
     }
 
     return res.status(500).json({
-      erro: "Erro interno ao cadastrar cliente.",
+      erro:
+        "Erro interno ao cadastrar cliente.",
     });
   }
 }
 
-export async function cadastrarGoogle(req, res) {
+export async function cadastrarGoogle(
+  req,
+  res,
+) {
   const { credential } = req.body;
 
   if (!credential) {
     return res.status(400).json({
-      erro: "Credencial do Google não informada.",
+      erro:
+        "Credencial do Google não informada.",
     });
   }
 
   try {
-    const dadosGoogle = await validarTokenGoogle(credential);
-    const { googleId, nome, email, foto } = dadosGoogle;
+    const dadosGoogle =
+      await validarTokenGoogle(
+        credential,
+      );
 
-    const clienteExistente = await pool.query(
-      `
-      SELECT id
-      FROM clientes
-      WHERE google_id = $1 OR email = $2
-      LIMIT 1
-      `,
-      [googleId, email],
-    );
+    const {
+      googleId,
+      nome,
+      email,
+      foto,
+    } = dadosGoogle;
 
-    if (clienteExistente.rows.length > 0) {
+    const clienteExistente =
+      await pool.query(
+        `
+        SELECT id
+        FROM clientes
+        WHERE
+          google_id = $1
+          OR email = $2
+        LIMIT 1
+        `,
+        [googleId, email],
+      );
+
+    if (
+      clienteExistente.rows.length > 0
+    ) {
       return res.status(409).json({
-        erro: "Essa conta Google já está cadastrada. Faça login para continuar.",
+        erro:
+          "Essa conta Google já está cadastrada. Faça login para continuar.",
         codigo: "CONTA_EXISTENTE",
       });
     }
@@ -143,28 +202,47 @@ export async function cadastrarGoogle(req, res) {
         foto,
         provedor
       )
-      VALUES ($1, NULL, $2, NULL, $3, $4, 'google')
+      VALUES (
+        $1,
+        NULL,
+        $2,
+        NULL,
+        $3,
+        $4,
+        'google'
+      )
       RETURNING
         id,
         nome,
         telefone,
         email,
         foto,
-        provedor
+        provedor,
+        administrador
       `,
-      [nome, email, googleId, foto],
+      [
+        nome,
+        email,
+        googleId,
+        foto,
+      ],
     );
 
     const cliente = result.rows[0];
     const token = gerarToken(cliente);
 
     return res.status(201).json({
-      mensagem: "Conta criada com Google.",
-      cliente: formatarCliente(cliente),
+      mensagem:
+        "Conta criada com Google.",
+      cliente:
+        formatarCliente(cliente),
       token,
     });
   } catch (error) {
-    console.error("Erro no cadastro Google:", error);
+    console.error(
+      "Erro no cadastro Google:",
+      error,
+    );
 
     return res.status(401).json({
       erro:
@@ -175,12 +253,19 @@ export async function cadastrarGoogle(req, res) {
   }
 }
 
-export async function loginCliente(req, res) {
-  const { email, senha } = req.body;
+export async function loginCliente(
+  req,
+  res,
+) {
+  const {
+    email,
+    senha,
+  } = req.body;
 
   if (!email?.trim() || !senha) {
     return res.status(400).json({
-      erro: "E-mail e senha são obrigatórios.",
+      erro:
+        "E-mail e senha são obrigatórios.",
     });
   }
 
@@ -194,64 +279,96 @@ export async function loginCliente(req, res) {
         email,
         senha,
         foto,
-        provedor
+        provedor,
+        administrador
       FROM clientes
       WHERE email = $1
       LIMIT 1
       `,
-      [email.trim().toLowerCase()],
+      [
+        email
+          .trim()
+          .toLowerCase(),
+      ],
     );
 
     if (result.rows.length === 0) {
       return res.status(401).json({
-        erro: "E-mail ou senha incorretos.",
+        erro:
+          "E-mail ou senha incorretos.",
       });
     }
 
-    const cliente = result.rows[0];
+    const cliente =
+      result.rows[0];
 
     if (!cliente.senha) {
       return res.status(400).json({
-        erro: "Essa conta utiliza login com Google.",
+        erro:
+          "Essa conta utiliza login com Google.",
       });
     }
 
-    const senhaCorreta = await bcrypt.compare(senha, cliente.senha);
+    const senhaCorreta =
+      await bcrypt.compare(
+        senha,
+        cliente.senha,
+      );
 
     if (!senhaCorreta) {
       return res.status(401).json({
-        erro: "E-mail ou senha incorretos.",
+        erro:
+          "E-mail ou senha incorretos.",
       });
     }
 
-    const token = gerarToken(cliente);
+    const token =
+      gerarToken(cliente);
 
     return res.json({
-      mensagem: "Login realizado com sucesso.",
-      cliente: formatarCliente(cliente),
+      mensagem:
+        "Login realizado com sucesso.",
+      cliente:
+        formatarCliente(cliente),
       token,
     });
   } catch (error) {
-    console.error("Erro no login:", error);
+    console.error(
+      "Erro no login:",
+      error,
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao realizar login.",
+      erro:
+        "Erro interno ao realizar login.",
     });
   }
 }
 
-export async function loginGoogle(req, res) {
+export async function loginGoogle(
+  req,
+  res,
+) {
   const { credential } = req.body;
 
   if (!credential) {
     return res.status(400).json({
-      erro: "Credencial do Google não informada.",
+      erro:
+        "Credencial do Google não informada.",
     });
   }
 
   try {
-    const dadosGoogle = await validarTokenGoogle(credential);
-    const { googleId, email, foto } = dadosGoogle;
+    const dadosGoogle =
+      await validarTokenGoogle(
+        credential,
+      );
+
+    const {
+      googleId,
+      email,
+      foto,
+    } = dadosGoogle;
 
     const result = await pool.query(
       `
@@ -262,9 +379,12 @@ export async function loginGoogle(req, res) {
         email,
         google_id,
         foto,
-        provedor
+        provedor,
+        administrador
       FROM clientes
-      WHERE google_id = $1 OR email = $2
+      WHERE
+        google_id = $1
+        OR email = $2
       LIMIT 1
       `,
       [googleId, email],
@@ -272,51 +392,78 @@ export async function loginGoogle(req, res) {
 
     if (result.rows.length === 0) {
       return res.status(404).json({
-        erro: "Essa conta Google ainda não está cadastrada.",
-        codigo: "CONTA_NAO_CADASTRADA",
+        erro:
+          "Essa conta Google ainda não está cadastrada.",
+        codigo:
+          "CONTA_NAO_CADASTRADA",
       });
     }
 
-    const clienteExistente = result.rows[0];
+    const clienteExistente =
+      result.rows[0];
 
     if (
       clienteExistente.google_id &&
-      clienteExistente.google_id !== googleId
+      clienteExistente.google_id !==
+        googleId
     ) {
       return res.status(409).json({
-        erro: "Esse e-mail já está vinculado a outra conta Google.",
+        erro:
+          "Esse e-mail já está vinculado a outra conta Google.",
       });
     }
 
-    const updated = await pool.query(
-      `
-      UPDATE clientes
-      SET
-        google_id = COALESCE(google_id, $1),
-        foto = COALESCE($2, foto),
-        atualizado_em = NOW()
-      WHERE id = $3
-      RETURNING
-        id,
-        nome,
-        telefone,
-        email,
-        foto,
-        provedor
-      `,
-      [googleId, foto, clienteExistente.id],
-    );
+    const updated =
+      await pool.query(
+        `
+        UPDATE clientes
+        SET
+          google_id =
+            COALESCE(
+              google_id,
+              $1
+            ),
+          foto =
+            COALESCE(
+              $2,
+              foto
+            ),
+          atualizado_em = NOW()
+        WHERE id = $3
+        RETURNING
+          id,
+          nome,
+          telefone,
+          email,
+          foto,
+          provedor,
+          administrador
+        `,
+        [
+          googleId,
+          foto,
+          clienteExistente.id,
+        ],
+      );
 
-    const cliente = updated.rows[0];
-    const token = gerarToken(cliente);
+    const cliente =
+      updated.rows[0];
+
+    const token =
+      gerarToken(cliente);
 
     return res.json({
-      mensagem: "Login com Google realizado com sucesso.",
-      cliente: formatarCliente(cliente),
+      mensagem:
+        "Login com Google realizado com sucesso.",
+      cliente:
+        formatarCliente(cliente),
       token,
     });
   } catch (error) {
-    console.error("Erro no login Google:", error);
+    console.error(
+      "Erro no login Google:",
+      error,
+    );
 
     return res.status(401).json({
       erro:
@@ -327,39 +474,54 @@ export async function loginGoogle(req, res) {
   }
 }
 
-export async function buscarUsuarioLogado(req, res) {
+export async function buscarUsuarioLogado(
+  req,
+  res,
+) {
   try {
-    const result = await pool.query(
-      `
-      SELECT
-        id,
-        nome,
-        telefone,
-        email,
-        foto,
-        provedor,
-        criado_em
-      FROM clientes
-      WHERE id = $1
-      LIMIT 1
-      `,
-      [req.usuario.id],
-    );
+    const result =
+      await pool.query(
+        `
+        SELECT
+          id,
+          nome,
+          telefone,
+          email,
+          foto,
+          provedor,
+          administrador,
+          criado_em
+        FROM clientes
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [req.usuario.id],
+      );
 
-    if (result.rows.length === 0) {
+    if (
+      result.rows.length === 0
+    ) {
       return res.status(404).json({
-        erro: "Usuário não encontrado.",
+        erro:
+          "Usuário não encontrado.",
       });
     }
 
     return res.json({
-      cliente: result.rows[0],
+      cliente:
+        formatarCliente(
+          result.rows[0],
+        ),
     });
   } catch (error) {
-    console.error("Erro ao buscar usuário:", error);
+    console.error(
+      "Erro ao buscar usuário:",
+      error,
+    );
 
     return res.status(500).json({
-      erro: "Erro interno ao buscar usuário.",
+      erro:
+        "Erro interno ao buscar usuário.",
     });
   }
 }
