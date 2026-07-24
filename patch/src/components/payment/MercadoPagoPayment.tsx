@@ -1,20 +1,43 @@
-import { useMemo, useState } from "react";
-import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
-import { CheckCircle2, Clipboard, LoaderCircle, QrCode } from "lucide-react";
+import {
+  useMemo,
+  useState,
+} from "react";
+import {
+  CardPayment,
+  initMercadoPago,
+} from "@mercadopago/sdk-react";
+import {
+  CheckCircle2,
+  Clipboard,
+  LoaderCircle,
+  QrCode,
+} from "lucide-react";
+import {
+  useNavigate,
+} from "react-router-dom";
 
-import type { CartItem } from "../../../types/product";
+import type {
+  CartItem,
+} from "../../../types/product";
 
 import "./mercadoPagoPayment.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3001";
 
-const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY;
+const publicKey =
+  import.meta.env
+    .VITE_MERCADO_PAGO_PUBLIC_KEY;
 
 if (publicKey) {
   initMercadoPago(publicKey);
 }
 
-export type MetodoPagamento = "pix" | "credit_card" | "debit_card";
+export type MetodoPagamento =
+  | "pix"
+  | "credit_card"
+  | "debit_card";
 
 type MercadoPagoPaymentProps = {
   metodo: MetodoPagamento;
@@ -23,7 +46,10 @@ type MercadoPagoPaymentProps = {
   cart: CartItem[];
   valorBase: number;
   totalCartao: number;
-  onPaymentCreated?: (paymentId: string, status: string) => void;
+  onPaymentCreated?: (
+    paymentId: string,
+    status: string,
+  ) => void;
 };
 
 type PixResponse = {
@@ -34,6 +60,14 @@ type PixResponse = {
   qrCode?: string;
   qrCodeBase64?: string;
   expiracao?: string | null;
+};
+
+type CardResponse = {
+  pedidoId: number;
+  numeroPedido?: string;
+  paymentId: string;
+  status: string;
+  statusDetail?: string;
 };
 
 type CardFormData = {
@@ -51,11 +85,15 @@ type CardFormData = {
   };
 };
 
-function itensDoCarrinho(cart: CartItem[]) {
-  return cart.map((item: CartItem) => ({
-    produtoId: item.product.id,
-    quantidade: item.quantity,
-  }));
+function itensDoCarrinho(
+  cart: CartItem[],
+) {
+  return cart.map(
+    (item: CartItem) => ({
+      produtoId: item.product.id,
+      quantidade: item.quantity,
+    }),
+  );
 }
 
 export default function MercadoPagoPayment({
@@ -67,72 +105,142 @@ export default function MercadoPagoPayment({
   totalCartao,
   onPaymentCreated,
 }: MercadoPagoPaymentProps) {
-  const [pix, setPix] = useState<PixResponse | null>(null);
-  const [erro, setErro] = useState("");
-  const [carregandoPix, setCarregandoPix] = useState(false);
-  const [copiado, setCopiado] = useState(false);
+  const navigate = useNavigate();
+
+  const [pix, setPix] =
+    useState<PixResponse | null>(null);
+
+  const [copiado, setCopiado] =
+    useState(false);
+
+  const [erro, setErro] =
+    useState("");
+
+  const [
+    carregandoPix,
+    setCarregandoPix,
+  ] = useState(false);
 
   const valorDoBrick = useMemo(
-    () => Number((metodo === "pix" ? valorBase : totalCartao).toFixed(2)),
-    [metodo, valorBase, totalCartao],
+    () =>
+      Number(
+        (
+          metodo === "pix"
+            ? valorBase
+            : totalCartao
+        ).toFixed(2),
+      ),
+    [
+      metodo,
+      valorBase,
+      totalCartao,
+    ],
   );
+
+  function abrirPedido(
+    pedidoId: number,
+    paymentId: string,
+    status: string,
+  ) {
+    onPaymentCreated?.(
+      paymentId,
+      status,
+    );
+
+    navigate(
+      `/meus-pedidos?pedido=${pedidoId}`,
+      {
+        replace: true,
+        state: {
+          novoPedido: true,
+        },
+      },
+    );
+  }
 
   async function gerarPix() {
     setErro("");
     setCarregandoPix(true);
 
     try {
-      const response = await fetch(`${API_URL}/pagamentos/pix`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${API_URL}/pagamentos/pix`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            enderecoId,
+
+            itens:
+              itensDoCarrinho(cart),
+
+            valorFrete: 0,
+          }),
         },
-        body: JSON.stringify({
-          enderecoId,
-          itens: itensDoCarrinho(cart),
-          valorFrete: 0,
-        }),
-      });
-
-      const textoResposta = await response.text();
-
-      console.log(
-        "Resposta do backend ao gerar Pix:",
-        response.status,
-        textoResposta,
       );
 
-      let data: {
-        erro?: string;
-        detalhes?: string;
-        pedidoId?: number;
-        numeroPedido?: string;
-        paymentId?: string;
-        status?: string;
-        qrCode?: string;
-        qrCodeBase64?: string;
-        expiracao?: string | null;
-      };
+      const textoResposta =
+        await response.text();
+
+      let data:
+        | (Partial<PixResponse> & {
+            erro?: string;
+            detalhes?: string;
+          })
+        | null = null;
 
       try {
-        data = textoResposta ? JSON.parse(textoResposta) : {};
+        data = textoResposta
+          ? JSON.parse(textoResposta)
+          : {};
       } catch {
-        throw new Error(textoResposta || `Erro HTTP ${response.status}`);
+        throw new Error(
+          textoResposta ||
+            `Erro HTTP ${response.status}`,
+        );
       }
 
       if (!response.ok) {
         throw new Error(
-          data.detalhes || data.erro || `Erro HTTP ${response.status}`,
+          data?.detalhes ||
+            data?.erro ||
+            `Erro HTTP ${response.status}`,
         );
       }
 
-      const pixCriado = data as PixResponse;
+      if (
+        !data?.pedidoId ||
+        !data.paymentId ||
+        !data.status
+      ) {
+        throw new Error(
+          "O servidor não retornou os dados completos do pedido.",
+        );
+      }
+
+      const pixCriado =
+        data as PixResponse;
+
       setPix(pixCriado);
 
-      onPaymentCreated?.(pixCriado.paymentId, pixCriado.status);
+      onPaymentCreated?.(
+        pixCriado.paymentId,
+        pixCriado.status,
+      );
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Erro ao gerar Pix:",
+        error,
+      );
+
       setErro(
         error instanceof Error
           ? error.message
@@ -144,10 +252,15 @@ export default function MercadoPagoPayment({
   }
 
   async function copiarPix() {
-    if (!pix?.qrCode) return;
+    if (!pix?.qrCode) {
+      return;
+    }
 
     try {
-      await navigator.clipboard.writeText(pix.qrCode);
+      await navigator.clipboard.writeText(
+        pix.qrCode,
+      );
+
       setCopiado(true);
 
       window.setTimeout(() => {
@@ -160,43 +273,113 @@ export default function MercadoPagoPayment({
     }
   }
 
-  async function enviarPagamentoCartao(formData: CardFormData) {
+  async function enviarPagamentoCartao(
+    formData: CardFormData,
+  ) {
     setErro("");
 
-    const response = await fetch(`${API_URL}/pagamentos/cartao`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        enderecoId,
-        itens: itensDoCarrinho(cart),
-        valorFrete: 0,
-        metodoSelecionado: metodo,
-        dadosPagamento: formData,
-      }),
-    });
+    try {
+      const response = await fetch(
+        `${API_URL}/pagamentos/cartao`,
+        {
+          method: "POST",
 
-    const data = await response.json();
+          headers: {
+            "Content-Type":
+              "application/json",
 
-    if (!response.ok) {
-      const mensagem = data.erro || "Não foi possível processar o cartão.";
+            Authorization:
+              `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            enderecoId,
+
+            itens:
+              itensDoCarrinho(cart),
+
+            valorFrete: 0,
+
+            metodoSelecionado:
+              metodo,
+
+            dadosPagamento:
+              formData,
+          }),
+        },
+      );
+
+      const textoResposta =
+        await response.text();
+
+      let data:
+        | (Partial<CardResponse> & {
+            erro?: string;
+            detalhes?: string;
+          })
+        | null = null;
+
+      try {
+        data = textoResposta
+          ? JSON.parse(textoResposta)
+          : {};
+      } catch {
+        throw new Error(
+          textoResposta ||
+            `Erro HTTP ${response.status}`,
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detalhes ||
+            data?.erro ||
+            "Não foi possível processar o cartão.",
+        );
+      }
+
+      if (
+        !data?.pedidoId ||
+        !data.paymentId ||
+        !data.status
+      ) {
+        throw new Error(
+          "O servidor não retornou os dados completos do pedido.",
+        );
+      }
+
+      abrirPedido(
+        data.pedidoId,
+        data.paymentId,
+        data.status,
+      );
+
+      return data;
+    } catch (error) {
+      console.error(
+        "Erro ao processar cartão:",
+        error,
+      );
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível processar o cartão.";
 
       setErro(mensagem);
-      throw new Error(mensagem);
+
+      throw error;
     }
-
-    onPaymentCreated?.(String(data.paymentId), data.status);
-
-    return data;
   }
 
   if (!publicKey) {
     return (
       <div className="mp-payment-error">
-        A variável <strong>VITE_MERCADO_PAGO_PUBLIC_KEY</strong> não foi
-        configurada.
+        A variável{" "}
+        <strong>
+          VITE_MERCADO_PAGO_PUBLIC_KEY
+        </strong>{" "}
+        não foi configurada.
       </div>
     );
   }
@@ -204,7 +387,11 @@ export default function MercadoPagoPayment({
   if (metodo === "pix") {
     return (
       <div className="mp-payment-box">
-        {erro && <div className="mp-payment-error">{erro}</div>}
+        {erro && (
+          <div className="mp-payment-error">
+            {erro}
+          </div>
+        )}
 
         {!pix ? (
           <>
@@ -212,11 +399,14 @@ export default function MercadoPagoPayment({
               <QrCode size={28} />
 
               <div>
-                <strong>Pagamento por Pix</strong>
+                <strong>
+                  Pagamento por Pix
+                </strong>
 
                 <p>
-                  O QR Code será gerado pelo Mercado Pago. O pedido só será
-                  confirmado depois da aprovação do pagamento.
+                  Gere o QR Code, realize o
+                  pagamento e depois acompanhe
+                  a situação do pedido.
                 </p>
               </div>
             </div>
@@ -229,12 +419,17 @@ export default function MercadoPagoPayment({
             >
               {carregandoPix ? (
                 <>
-                  <LoaderCircle className="mp-spin" size={20} />
+                  <LoaderCircle
+                    className="mp-spin"
+                    size={20}
+                  />
+
                   Gerando Pix...
                 </>
               ) : (
                 <>
                   <QrCode size={20} />
+
                   Gerar Pix
                 </>
               )}
@@ -246,9 +441,20 @@ export default function MercadoPagoPayment({
               <CheckCircle2 size={22} />
 
               <div>
-                <strong>Pix gerado com sucesso</strong>
+                <strong>
+                  Pix gerado com sucesso
+                </strong>
 
-                <span>Status: {pix.status}</span>
+                <span>
+                  Status: {pix.status}
+                </span>
+
+                {pix.numeroPedido && (
+                  <span>
+                    Pedido:{" "}
+                    {pix.numeroPedido}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -263,9 +469,14 @@ export default function MercadoPagoPayment({
             {pix.qrCode && (
               <>
                 <label className="mp-copy-field">
-                  <span>Pix Copia e Cola</span>
+                  <span>
+                    Pix Copia e Cola
+                  </span>
 
-                  <textarea value={pix.qrCode} readOnly />
+                  <textarea
+                    value={pix.qrCode}
+                    readOnly
+                  />
                 </label>
 
                 <button
@@ -275,16 +486,40 @@ export default function MercadoPagoPayment({
                 >
                   <Clipboard size={18} />
 
-                  {copiado ? "Código copiado" : "Copiar código Pix"}
+                  {copiado
+                    ? "Código copiado"
+                    : "Copiar código Pix"}
                 </button>
               </>
             )}
 
             {pix.expiracao && (
               <small className="mp-expiration">
-                Validade: {new Date(pix.expiracao).toLocaleString("pt-BR")}
+                Validade:{" "}
+                {new Date(
+                  pix.expiracao,
+                ).toLocaleString(
+                  "pt-BR",
+                )}
               </small>
             )}
+
+            <button
+              type="button"
+              className="mp-primary-button"
+              onClick={() =>
+                navigate(
+                  `/meus-pedidos?pedido=${pix.pedidoId}`,
+                  {
+                    state: {
+                      novoPedido: true,
+                    },
+                  },
+                )
+              }
+            >
+              Acompanhar pedido
+            </button>
           </div>
         )}
       </div>
@@ -294,18 +529,27 @@ export default function MercadoPagoPayment({
   return (
     <div className="mp-payment-box">
       <div className="mp-card-fee">
-        <strong>Acréscimo de 5% no cartão</strong>
+        <strong>
+          Acréscimo de 5% no cartão
+        </strong>
 
         <span>
           Valor final do cartão:{" "}
-          {totalCartao.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
+          {totalCartao.toLocaleString(
+            "pt-BR",
+            {
+              style: "currency",
+              currency: "BRL",
+            },
+          )}
         </span>
       </div>
 
-      {erro && <div className="mp-payment-error">{erro}</div>}
+      {erro && (
+        <div className="mp-payment-error">
+          {erro}
+        </div>
+      )}
 
       <CardPayment
         initialization={{
@@ -315,19 +559,31 @@ export default function MercadoPagoPayment({
           paymentMethods: {
             maxInstallments: 12,
           },
+
           visual: {
             style: {
               theme: "default",
             },
           },
         }}
-        onSubmit={async (formData: CardFormData) => {
-          await enviarPagamentoCartao(formData);
+        onSubmit={async (
+          formData: CardFormData,
+        ) => {
+          await enviarPagamentoCartao(
+            formData,
+          );
         }}
-        onError={(error: unknown) => {
-          console.error("Erro no Brick:", error);
+        onError={(
+          error: unknown,
+        ) => {
+          console.error(
+            "Erro no Brick:",
+            error,
+          );
 
-          setErro("Confira os dados do cartão e tente novamente.");
+          setErro(
+            "Confira os dados do cartão e tente novamente.",
+          );
         }}
       />
     </div>

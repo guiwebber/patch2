@@ -4,6 +4,7 @@ import {
   EyeOff,
   KeyRound,
   MapPin,
+  PackageSearch,
   Pencil,
   Plus,
   Save,
@@ -566,6 +567,14 @@ export default function Account() {
           >
             <MapPin size={20} />
             Endereços
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/meus-pedidos")}
+          >
+            <PackageSearch size={20} />
+            Meus pedidos
           </button>
         </aside>
 

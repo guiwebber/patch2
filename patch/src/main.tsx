@@ -1,27 +1,38 @@
-import { createRoot } from "react-dom/client";
+import {
+  createRoot,
+} from "react-dom/client";
 import {
   BrowserRouter,
   Route,
   Routes,
 } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import {
+  GoogleOAuthProvider,
+} from "@react-oauth/google";
 
-import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
-import { StoreProvider } from "./context/StoreContext";
+import {
+  AuthProvider,
+} from "./context/AuthContext";
+import {
+  CartProvider,
+} from "./context/CartContext";
+import {
+  StoreProvider,
+} from "./context/StoreContext";
 import Footer from "./components/footer/footer";
 import MenuBar from "./components/menu/menu";
-import ProtectedRoute from "./components/protectedRoute/ProtectedRoute";
 
 import Account from "../pages/account/account";
 import About from "../pages/about/about";
 import Checkout from "../pages/checkout/checkout";
 import Home from "../pages/home/home";
 import Login from "../pages/login/login";
+import Orders from "../pages/orders/orders";
 import Signup from "../pages/signup/signup";
 
 const googleClientId =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  import.meta.env
+    .VITE_GOOGLE_CLIENT_ID;
 
 if (!googleClientId) {
   throw new Error(
@@ -29,8 +40,12 @@ if (!googleClientId) {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
-  <GoogleOAuthProvider clientId={googleClientId}>
+createRoot(
+  document.getElementById("root")!,
+).render(
+  <GoogleOAuthProvider
+    clientId={googleClientId}
+  >
     <BrowserRouter>
       <AuthProvider>
         <StoreProvider>
@@ -38,7 +53,11 @@ createRoot(document.getElementById("root")!).render(
             <MenuBar />
 
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route
+                path="/"
+                element={<Home />}
+              />
+
               <Route
                 path="/sobre"
                 element={<About />}
@@ -46,20 +65,17 @@ createRoot(document.getElementById("root")!).render(
 
               <Route
                 path="/minha-conta"
-                element={
-                  <ProtectedRoute>
-                    <Account />
-                  </ProtectedRoute>
-                }
+                element={<Account />}
+              />
+
+              <Route
+                path="/meus-pedidos"
+                element={<Orders />}
               />
 
               <Route
                 path="/checkout"
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                }
+                element={<Checkout />}
               />
 
               <Route

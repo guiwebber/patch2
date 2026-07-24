@@ -157,7 +157,7 @@ export const products: Product[] = [
     category: "Banheiro",
     description:
       "Conjunto decorativo com detalhes em tecido e acabamento artesanal.",
-    price: 129.9,
+    price: 0.1,
     oldPrice: 149.9,
     image:
       "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=900&q=80",

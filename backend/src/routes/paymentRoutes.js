@@ -4,11 +4,15 @@ import {
   criarPagamentoCartao,
   criarPix,
 } from "../controllers/paymentController.js";
-import { autenticarUsuario } from "../middlewares/authMiddleware.js";
+import {
+  autenticarUsuario,
+} from "../middlewares/authMiddleware.js";
 
 const paymentRoutes = Router();
 
-paymentRoutes.use(autenticarUsuario);
+paymentRoutes.use(
+  autenticarUsuario,
+);
 
 paymentRoutes.post(
   "/pagamentos/pix",
