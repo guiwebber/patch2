@@ -86,7 +86,7 @@ export async function mercadoPagoWebhook(
       "charged_back",
     ].includes(pagamento.status);
 
-    await pool.query(
+    const resultado = await pool.query(
       `
       UPDATE pedidos
       SET
@@ -96,39 +96,77 @@ export async function mercadoPagoWebhook(
         mercado_pago_status = $4,
         mercado_pago_status_detail = $5,
         status_pagamento = $6,
+
         status = CASE
-          WHEN $7 THEN 'pagamento_aprovado'
+          WHEN $7 THEN 'pago'
           WHEN $8 THEN 'cancelado'
           ELSE status
         END,
+
         pago_em = CASE
           WHEN $7 THEN
             COALESCE(pago_em, NOW())
           ELSE pago_em
         END,
+
         cancelado_em = CASE
           WHEN $8 THEN
             COALESCE(cancelado_em, NOW())
           ELSE cancelado_em
         END,
+
         atualizado_em = NOW()
+
       WHERE id = $9
+
+      RETURNING
+        id,
+        numero_pedido,
+        status,
+        status_pagamento,
+        mercado_pago_status,
+        pago_em
       `,
       [
         String(pagamento.id),
+
         pagamento.payment_type_id ||
           null,
+
         pagamento.payment_method_id ||
           null,
+
         pagamento.status || null,
+
         pagamento.status_detail || null,
+
         statusPagamentoLocal(
           pagamento.status,
         ),
+
         aprovado,
+
         cancelado,
+
         pedidoId,
       ],
+    );
+
+    if (resultado.rows.length === 0) {
+      console.warn(
+        "Pedido não encontrado para o pagamento:",
+        {
+          pedidoId,
+          pagamentoId: pagamento.id,
+        },
+      );
+
+      return res.sendStatus(200);
+    }
+
+    console.log(
+      "Pedido atualizado pelo webhook:",
+      resultado.rows[0],
     );
 
     return res.sendStatus(200);
@@ -137,12 +175,26 @@ export async function mercadoPagoWebhook(
       error instanceof
       InvalidWebhookSignatureError
     ) {
+      console.error(
+        "Assinatura do webhook inválida.",
+      );
+
       return res.sendStatus(401);
     }
 
     console.error(
       "Erro no webhook Mercado Pago:",
-      error,
+      {
+        name: error?.name,
+        message: error?.message,
+        status: error?.status,
+        code: error?.code,
+        detail: error?.detail,
+        constraint: error?.constraint,
+        cause: error?.cause,
+        apiError: error?.apiError,
+        stack: error?.stack,
+      },
     );
 
     return res.sendStatus(500);
