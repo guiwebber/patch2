@@ -75,7 +75,7 @@ export const produtos = [
     id: 7,
     nome: "Coelho Decorativo",
     categoria: "Páscoa",
-    preco: 64.9,
+    preco: 0.1,
     imagem:
       "https://images.unsplash.com/photo-1524498250077-390f9e378fc0?auto=format&fit=crop&w=900&q=80",
     peso: 0.45,
@@ -87,7 +87,7 @@ export const produtos = [
     id: 8,
     nome: "Caminho de Mesa",
     categoria: "Decoração",
-    preco: 98.9,
+    preco: 0.1,
     imagem:
       "https://images.unsplash.com/photo-1600566753051-f0b89df2dd90?auto=format&fit=crop&w=900&q=80",
     peso: 0.65,
@@ -99,7 +99,7 @@ export const produtos = [
     id: 9,
     nome: "Enfeite de Natal",
     categoria: "Natal",
-    preco: 29.9,
+    preco: 0.1,
     imagem:
       "https://images.unsplash.com/photo-1482638591678-a11589a805f2?auto=format&fit=crop&w=900&q=80",
     peso: 0.15,
@@ -111,7 +111,7 @@ export const produtos = [
     id: 10,
     nome: "Jogo de Banheiro",
     categoria: "Banheiro",
-    preco: 129.9,
+    preco: 0.1,
     imagem:
       "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=900&q=80",
     peso: 1.2,
