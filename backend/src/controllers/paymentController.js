@@ -436,7 +436,10 @@ export async function criarPix(req, res) {
       });
 
     let frete;
-
+console.log(
+  "DESABILITAR_FRETE:",
+  process.env.DESABILITAR_FRETE,
+);
     if (
       process.env
         .DESABILITAR_FRETE ===
@@ -595,7 +598,10 @@ export async function criarPagamentoCartao(
       });
 
     let frete;
-
+console.log(
+  "DESABILITAR_FRETE:",
+  process.env.DESABILITAR_FRETE,
+);
     if (
       process.env
         .DESABILITAR_FRETE ===
