@@ -21,13 +21,17 @@ type AuthContextData = {
   token: string | null;
   estaLogado: boolean;
   ehAdministrador: boolean;
+  carregandoAutenticacao: boolean;
+
   entrar: (
     usuario: Usuario,
     token: string,
   ) => void;
+
   atualizarUsuario: (
     usuario: Usuario,
   ) => void;
+
   sair: () => void;
 };
 
@@ -57,38 +61,60 @@ export function AuthProvider({
     null,
   );
 
+  const [
+    carregandoAutenticacao,
+    setCarregandoAutenticacao,
+  ] = useState(true);
+
   useEffect(() => {
-    const usuarioSalvo =
-      localStorage.getItem(
-        "usuario",
-      );
-
-    const tokenSalvo =
-      localStorage.getItem(
-        "token",
-      );
-
-    if (
-      usuarioSalvo &&
-      tokenSalvo
-    ) {
-      try {
-        setUsuario(
-          JSON.parse(
-            usuarioSalvo,
-          ),
-        );
-
-        setToken(tokenSalvo);
-      } catch {
-        localStorage.removeItem(
+    try {
+      const usuarioSalvo =
+        localStorage.getItem(
           "usuario",
         );
 
-        localStorage.removeItem(
+      const tokenSalvo =
+        localStorage.getItem(
           "token",
         );
+
+      if (
+        usuarioSalvo &&
+        tokenSalvo
+      ) {
+        const usuarioConvertido =
+          JSON.parse(
+            usuarioSalvo,
+          ) as Usuario;
+
+        setUsuario(
+          usuarioConvertido,
+        );
+
+        setToken(
+          tokenSalvo,
+        );
       }
+    } catch (error) {
+      console.error(
+        "Erro ao carregar autenticação:",
+        error,
+      );
+
+      localStorage.removeItem(
+        "usuario",
+      );
+
+      localStorage.removeItem(
+        "token",
+      );
+
+      setUsuario(null);
+      setToken(null);
+    } finally {
+      setCarregandoAutenticacao(
+        false,
+      );
     }
   }, []);
 
@@ -145,21 +171,26 @@ export function AuthProvider({
     setToken(null);
   }
 
+  const estaLogado =
+    Boolean(
+      usuario &&
+      token,
+    );
+
+  const ehAdministrador =
+    Boolean(
+      usuario
+        ?.administrador,
+    );
+
   return (
     <AuthContext.Provider
       value={{
         usuario,
         token,
-        estaLogado:
-          Boolean(
-            usuario &&
-            token,
-          ),
-        ehAdministrador:
-          Boolean(
-            usuario
-              ?.administrador,
-          ),
+        estaLogado,
+        ehAdministrador,
+        carregandoAutenticacao,
         entrar,
         atualizarUsuario,
         sair,
