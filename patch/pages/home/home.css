@@ -286,12 +286,30 @@ input {
   background: #d97706;
 }
 
+.featured-badge,
 .discount-badge {
+  position: absolute;
   left: 14px;
-  top: 50px;
+  padding: 7px 10px;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.featured-badge {
+  top: 14px;
+  background: #d97706;
+}
+
+.discount-badge {
+  top: 14px;
   background: #b93d3d;
 }
 
+.featured-badge + .discount-badge {
+  top: 50px;
+}
 .favorite-button {
   width: 39px;
   height: 39px;
@@ -404,7 +422,9 @@ input {
   border-radius: 50%;
   box-shadow: 0 12px 30px rgba(61, 44, 36, 0.3);
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s;
 }
 
 .floating-cart:hover {
@@ -1001,7 +1021,6 @@ input {
   font-size: 11px;
 }
 
-
 /* =========================================================
    CARROSSEL DO HERO
    ========================================================= */
@@ -1035,12 +1054,11 @@ input {
   position: absolute;
   inset: 0;
   z-index: -2;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(45, 24, 11, 0.05),
-      rgba(45, 24, 11, 0.35)
-    );
+  background: linear-gradient(
+    180deg,
+    rgba(45, 24, 11, 0.05),
+    rgba(45, 24, 11, 0.35)
+  );
 }
 
 .hero-arrow,

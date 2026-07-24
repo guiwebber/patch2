@@ -67,7 +67,7 @@ export default function Footer() {
 
           <a href="tel:+5554999999999">
             <Phone size={18} />
-            (54) 99999-9999
+            (54) 99178-1286
           </a>
 
           <a href="mailto:contato@patchwork.com.br">
@@ -82,12 +82,12 @@ export default function Footer() {
 
           <p>
             <MapPin size={18} />
-            Rio Grande do Sul, Brasil
+            Getúlio Vargas, Rio Grande do Sul, Brasil
           </p>
 
           <p>
             <Clock3 size={18} />
-            Segunda a sexta, das 9h às 18h
+            Segunda a sexta, das 8h às 18h
           </p>
         </div>
       </div>
