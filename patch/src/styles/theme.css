@@ -1,0 +1,579 @@
+
+:root {
+  --sf-wine-950: #3b0c14;
+  --sf-wine-900: #4b101b;
+  --sf-wine-800: #611624;
+  --sf-wine-700: #762031;
+  --sf-wine-600: #91364a;
+  --sf-wine-100: #f5e8eb;
+  --sf-wine-50: #fbf4f6;
+
+  --sf-gold-800: #8f5d24;
+  --sf-gold-700: #a87332;
+  --sf-gold-600: #bd8948;
+  --sf-gold-500: #d1a15f;
+  --sf-gold-300: #e8c995;
+  --sf-gold-100: #f7ead4;
+
+  --sf-cream-50: #fffaf6;
+  --sf-cream-100: #fbf3ec;
+  --sf-cream-200: #f1e3d7;
+  --sf-cream-300: #e5d0bf;
+
+  --sf-ink-900: #342426;
+  --sf-ink-700: #5e4b4f;
+  --sf-ink-500: #806e72;
+
+  --sf-white: #ffffff;
+  --sf-success: #2f6f4e;
+  --sf-danger: #a33b48;
+
+  --sf-shadow:
+    0 16px 42px rgba(75, 16, 27, 0.08);
+  --sf-shadow-strong:
+    0 22px 60px rgba(75, 16, 27, 0.16);
+}
+
+html {
+  background: var(--sf-cream-50);
+}
+
+body {
+  color: var(--sf-ink-900);
+  background: var(--sf-cream-50);
+}
+
+::selection {
+  color: var(--sf-white);
+  background: var(--sf-wine-700);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  accent-color: var(--sf-wine-700);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(189, 137, 72, 0.28);
+  outline-offset: 2px;
+}
+
+/* Páginas */
+.home,
+.about-page,
+.account-page,
+.account-loading,
+.auth-page,
+.admin-page,
+.admin-loading,
+.orders-page,
+.orders-loading,
+.checkout-page {
+  color: var(--sf-ink-900) !important;
+  background: var(--sf-cream-50) !important;
+}
+
+/* Cabeçalhos e textos */
+.hero h1,
+.section-header h2,
+.about-hero h1,
+.about-story-content h2,
+.about-section-header h2,
+.account-heading h1,
+.auth-form-header h2,
+.admin-header h1,
+.orders-header h1,
+.checkout-heading h1,
+.product-content h3,
+.modal-content h2,
+.footer-column h3 {
+  color: var(--sf-ink-900);
+}
+
+.hero p,
+.section-header p,
+.about-story-content p,
+.about-values-grid p,
+.account-card-title p,
+.account-heading p,
+.auth-form-header p,
+.admin-header p,
+.orders-header p,
+.checkout-card-heading p,
+.summary-heading p,
+.product-content p,
+.modal-content > p {
+  color: var(--sf-ink-500);
+}
+
+/* Tags e rótulos */
+.hero-tag,
+.section-label,
+.about-label,
+.about-hero-content > span,
+.account-heading > span,
+.admin-header span,
+.orders-header > div > span,
+.checkout-heading > span,
+.product-category,
+.favorite-item-content span,
+.categories-dropdown-menu button.active {
+  color: var(--sf-wine-700) !important;
+}
+
+.hero-tag,
+.section-label {
+  background: var(--sf-gold-100) !important;
+}
+
+/* Botões principais */
+.hero-button,
+.details-button,
+.modal-cart-button,
+.checkout-button,
+.account-primary-button,
+.address-toolbar button,
+.empty-addresses button,
+.auth-submit,
+.admin-search button,
+.admin-order-actions button.send,
+.admin-order-actions button.deliver,
+.admin-filters button.active,
+.checkout-primary-button,
+.checkout-empty button,
+.order-pix-content button,
+.mp-primary-button,
+.view-favorite-button,
+.empty-favorites button,
+.mobile-categories button.active {
+  color: var(--sf-white) !important;
+  background: var(--sf-wine-700) !important;
+  border-color: var(--sf-wine-700) !important;
+}
+
+.hero-button:hover,
+.details-button:hover,
+.account-primary-button:hover,
+.auth-submit:hover,
+.checkout-primary-button:hover,
+.view-favorite-button:hover,
+.empty-favorites button:hover {
+  background: var(--sf-wine-900) !important;
+}
+
+/* Botões secundários */
+.clear-category-button,
+.admin-refresh,
+.orders-refresh,
+.checkout-card-heading > button,
+.mp-secondary-button,
+.address-actions button,
+.auth-link-button,
+.auth-footer a,
+.order-section > a {
+  color: var(--sf-wine-700) !important;
+}
+
+.clear-category-button,
+.checkout-card-heading > button,
+.address-actions button {
+  background: var(--sf-wine-50) !important;
+  border-color: var(--sf-wine-100) !important;
+}
+
+/* Ícones e destaques dourados */
+.about-values-grid svg,
+.account-card-title svg,
+.admin-summary svg,
+.checkout-card-heading svg,
+.payment-method > svg,
+.summary-heading svg,
+.mp-pix-intro > svg,
+.mp-payment-status > svg,
+.footer-column svg,
+.production-time svg,
+.modal-production-time svg,
+.order-number > svg,
+.admin-item-placeholder,
+.order-item-placeholder {
+  color: var(--sf-gold-700) !important;
+}
+
+.product-price strong,
+.modal-price strong,
+.cart-item-price,
+.cart-subtotal strong,
+.favorite-item-content strong,
+.summary-total strong,
+.review-product > strong {
+  color: var(--sf-wine-700) !important;
+}
+
+/* Cards */
+.benefits,
+.product-card,
+.account-sidebar,
+.account-card,
+.address-toolbar,
+.address-card,
+.auth-panel,
+.admin-summary article,
+.admin-toolbar,
+.admin-order-card,
+.orders-toolbar,
+.order-card,
+.checkout-card,
+.checkout-summary,
+.mp-payment-box,
+.about-values-grid article,
+.favorites-drawer,
+.cart-drawer {
+  background: var(--sf-white) !important;
+  border-color: var(--sf-cream-300) !important;
+  box-shadow: var(--sf-shadow) !important;
+}
+
+/* Áreas suaves */
+.about-values,
+.review-block,
+.review-shipping,
+.order-pix,
+.mp-card-fee,
+.google-password-info,
+.admin-order-actions,
+.modal-production-time,
+.made-to-order-notice,
+.summary-address {
+  background: var(--sf-cream-100) !important;
+  border-color: var(--sf-gold-300) !important;
+}
+
+/* Inputs */
+.search-box,
+.auth-input-wrapper,
+.account-form-grid input,
+.address-form-grid input,
+.address-form-grid select,
+.admin-search input,
+.admin-order-actions input,
+.orders-toolbar select,
+.checkout-address,
+.payment-method,
+.checkout-address-form input,
+.checkout-address-form select,
+.mp-copy-field textarea {
+  color: var(--sf-ink-900) !important;
+  background: var(--sf-white) !important;
+  border-color: var(--sf-cream-300) !important;
+}
+
+.auth-input-wrapper:focus-within,
+.account-form-grid input:focus,
+.address-form-grid input:focus,
+.address-form-grid select:focus,
+.checkout-address-form input:focus,
+.checkout-address-form select:focus,
+.admin-search input:focus,
+.admin-order-actions input:focus,
+.orders-toolbar select:focus,
+.mp-copy-field textarea:focus {
+  border-color: var(--sf-wine-700) !important;
+  box-shadow: 0 0 0 3px rgba(118, 32, 49, 0.12) !important;
+}
+
+/* Categorias, filtros e seleções */
+.category-button {
+  color: var(--sf-ink-700) !important;
+  background: var(--sf-white) !important;
+  border-color: var(--sf-cream-300) !important;
+}
+
+.category-button.active,
+.checkout-address.selected .address-radio,
+.payment-method.selected .payment-radio,
+.progress-item.active > span,
+.progress-item.done > span,
+.order-timeline > div.done > span,
+.order-timeline > div.current > span,
+.main-address,
+.favorites-count,
+.floating-cart-count {
+  color: var(--sf-white) !important;
+  background: var(--sf-wine-700) !important;
+  border-color: var(--sf-wine-700) !important;
+}
+
+.checkout-address:hover,
+.checkout-address.selected,
+.payment-method:hover,
+.payment-method.selected,
+.shipping-option.selected {
+  background: var(--sf-wine-50) !important;
+  border-color: var(--sf-wine-700) !important;
+  box-shadow: 0 0 0 3px rgba(118, 32, 49, 0.1) !important;
+}
+
+/* Menu */
+.site-header {
+  background: var(--sf-white) !important;
+  box-shadow:
+    0 2px 14px rgba(75, 16, 27, 0.09) !important;
+}
+
+.desktop-nav > a,
+.desktop-nav > button,
+.categories-trigger,
+.menu-icon-button,
+.logged-user-name,
+.mobile-menu > a,
+.mobile-menu > button {
+  color: var(--sf-ink-700) !important;
+}
+
+.desktop-nav > a:hover,
+.desktop-nav > button:hover,
+.categories-trigger:hover,
+.menu-icon-button:hover,
+.logged-user-profile:hover .logged-user-name,
+.mobile-menu > a:hover,
+.mobile-menu > button:hover {
+  color: var(--sf-wine-700) !important;
+}
+
+.menu-icon-button:hover,
+.mobile-menu > a:hover,
+.mobile-menu > button:hover,
+.categories-dropdown-menu button:hover,
+.categories-dropdown-menu button.active {
+  background: var(--sf-wine-50) !important;
+}
+
+.logged-user-avatar {
+  background: var(--sf-wine-700) !important;
+}
+
+.logged-user-photo {
+  border-color: var(--sf-gold-300) !important;
+}
+
+.logged-user-profile:hover .logged-user-photo,
+.logged-user-profile:hover .logged-user-avatar {
+  box-shadow:
+    0 0 0 3px rgba(189, 137, 72, 0.22) !important;
+}
+
+/* Footer claro para o logo */
+.site-footer {
+  color: var(--sf-ink-900) !important;
+  background:
+    linear-gradient(
+      180deg,
+      var(--sf-cream-100),
+      var(--sf-cream-200)
+    ) !important;
+  border-top: 1px solid var(--sf-cream-300);
+}
+
+.footer-brand p,
+.footer-column button,
+.footer-column a,
+.footer-column p,
+.footer-bottom {
+  color: var(--sf-ink-500) !important;
+}
+
+.footer-column h3 {
+  color: var(--sf-wine-800) !important;
+}
+
+.footer-column button:hover,
+.footer-column a:hover {
+  color: var(--sf-wine-700) !important;
+}
+
+.footer-bottom {
+  border-top-color: rgba(75, 16, 27, 0.1) !important;
+}
+
+.footer-logo {
+  filter:
+    drop-shadow(0 4px 12px rgba(75, 16, 27, 0.1));
+}
+
+/* Hero */
+.hero {
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(189, 137, 72, 0.2),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      var(--sf-cream-50),
+      var(--sf-cream-200)
+    ) !important;
+}
+
+.hero-art-card {
+  background: rgba(59, 12, 20, 0.72) !important;
+  border-color: rgba(232, 201, 149, 0.42) !important;
+}
+
+.hero-arrow:hover,
+.gallery-arrow:hover {
+  background: var(--sf-wine-700) !important;
+}
+
+.hero-dot.active {
+  background: var(--sf-gold-500) !important;
+}
+
+/* Modal e galeria */
+.product-modal {
+  border: 1px solid var(--sf-cream-300);
+  box-shadow: var(--sf-shadow-strong);
+}
+
+.modal-gallery {
+  background: var(--sf-cream-100) !important;
+}
+
+.modal-thumbnail.active,
+.modal-thumbnail:hover {
+  border-color: var(--sf-wine-700) !important;
+}
+
+.modal-favorite-button:hover,
+.modal-favorite-button.active,
+.favorite-button.active {
+  color: var(--sf-wine-700) !important;
+  background: var(--sf-wine-50) !important;
+  border-color: var(--sf-wine-100) !important;
+}
+
+/* Carrinho flutuante */
+.floating-cart {
+  background: var(--sf-wine-900) !important;
+}
+
+.floating-cart:hover {
+  background: var(--sf-wine-700) !important;
+}
+
+/* Autenticação */
+.auth-page {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(118, 32, 49, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      var(--sf-cream-50),
+      var(--sf-cream-200)
+    ) !important;
+}
+
+.auth-brand {
+  background:
+    linear-gradient(
+      rgba(59, 12, 20, 0.76),
+      rgba(59, 12, 20, 0.82)
+    ),
+    url("https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=1000&q=80")
+      center/cover !important;
+}
+
+.auth-brand-tag {
+  color: var(--sf-wine-900) !important;
+  background: var(--sf-gold-100) !important;
+}
+
+/* Sobre */
+.about-hero {
+  background:
+    linear-gradient(
+      rgba(59, 12, 20, 0.66),
+      rgba(59, 12, 20, 0.76)
+    ),
+    url("https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1600&q=85")
+      center/cover !important;
+}
+
+.about-hero-content > span {
+  color: var(--sf-gold-300) !important;
+}
+
+/* Status */
+.account-alert.success,
+.admin-alert.success,
+.orders-success,
+.status-payment.aprovado,
+.admin-status.entregue {
+  color: #275d42 !important;
+  background: #edf8f1 !important;
+  border-color: #c6e2d0 !important;
+}
+
+.account-alert.error,
+.admin-alert.error,
+.orders-error,
+.mp-payment-error,
+.status-payment.rejeitado,
+.status-payment.cancelado,
+.admin-status.cancelado {
+  color: var(--sf-danger) !important;
+  background: #fff1f3 !important;
+  border-color: #efc8cf !important;
+}
+
+.status-payment.pendente,
+.admin-status.em_producao {
+  color: var(--sf-gold-800) !important;
+  background: var(--sf-gold-100) !important;
+}
+
+.admin-status.enviado {
+  color: #315d78 !important;
+  background: #edf5fa !important;
+}
+
+/* Overlays */
+.modal-overlay,
+.cart-overlay,
+.favorites-overlay,
+.address-modal-overlay,
+.checkout-modal-overlay {
+  background: rgba(52, 36, 38, 0.68) !important;
+}
+
+/* Scrollbar */
+* {
+  scrollbar-color:
+    var(--sf-wine-600)
+    var(--sf-cream-200);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sf-cream-200);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sf-wine-600);
+  border: 2px solid var(--sf-cream-200);
+  border-radius: 999px;
+}

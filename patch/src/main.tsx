@@ -31,7 +31,7 @@ import Home from "../pages/home/home";
 import Login from "../pages/login/login";
 import Orders from "../pages/orders/orders";
 import Signup from "../pages/signup/signup";
-
+import "./styles/theme.css";
 const googleClientId =
   import.meta.env
     .VITE_GOOGLE_CLIENT_ID;
