@@ -36,6 +36,11 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
 
+const FRETE_DESABILITADO =
+  import.meta.env
+    .VITE_DESABILITAR_FRETE ===
+  "true";
+
 type Step =
   | "endereco"
   | "revisao"
@@ -177,7 +182,9 @@ export default function Checkout() {
     );
 
   const valorFrete =
-    freteSelecionado?.valor || 0;
+    FRETE_DESABILITADO
+      ? 0
+      : freteSelecionado?.valor || 0;
   const valorBase = Number(
     (cartTotal + valorFrete).toFixed(2),
   );
@@ -455,25 +462,38 @@ export default function Checkout() {
       setErro(
         "Selecione ou cadastre um endereço.",
       );
+
       return;
     }
 
     setErro("");
     setStep("revisao");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function continuarParaPagamento() {
-    if (!freteSelecionado) {
+    if (
+      !FRETE_DESABILITADO &&
+      !freteSelecionado
+    ) {
       setErro(
         "Calcule e selecione uma opção de frete.",
       );
+
       return;
     }
 
     setErro("");
     setStep("pagamento");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   }
 
   function irParaEtapa(target: Step) {
@@ -898,7 +918,8 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="review-shipping">
+              {!FRETE_DESABILITADO && (
+                <div className="review-shipping">
                 <div className="review-block-title">
                   <Truck size={20} />
                   <strong>
@@ -976,7 +997,25 @@ export default function Checkout() {
                     )}
                   </div>
                 )}
-              </div>
+                </div>
+              )}
+
+              {FRETE_DESABILITADO && (
+                <div className="review-block">
+                  <div className="review-block-title">
+                    <Truck size={20} />
+
+                    <strong>
+                      Frete temporariamente desabilitado
+                    </strong>
+                  </div>
+
+                  <p>
+                    O pedido será criado com frete de R$ 0,00
+                    somente durante os testes do Mercado Pago.
+                  </p>
+                </div>
+              )}
 
               <div className="review-total">
                 <div>
@@ -1019,7 +1058,10 @@ export default function Checkout() {
                   type="button"
                   className="checkout-primary-button"
                   onClick={continuarParaPagamento}
-                  disabled={!freteSelecionado}
+                  disabled={
+                    !FRETE_DESABILITADO &&
+                    !freteSelecionado
+                  }
                 >
                   Continuar para pagamento
                 </button>
@@ -1162,8 +1204,10 @@ export default function Checkout() {
                     valorBase={valorBase}
                     totalCartao={totalCartao}
                     freteId={
-                      freteSelecionado?.id ||
-                      ""
+                      FRETE_DESABILITADO
+                        ? "teste"
+                        : freteSelecionado?.id ||
+                          ""
                     }
                     onPaymentCreated={(
                       paymentId,
@@ -1289,9 +1333,11 @@ export default function Checkout() {
             <div>
               <span>Frete</span>
               <strong>
-                {freteSelecionado
-                  ? formatPrice(valorFrete)
-                  : "A calcular"}
+                {FRETE_DESABILITADO
+                  ? formatPrice(0)
+                  : freteSelecionado
+                    ? formatPrice(valorFrete)
+                    : "A calcular"}
               </strong>
             </div>
 
@@ -1322,9 +1368,11 @@ export default function Checkout() {
           </div>
 
           <p className="summary-note">
-            {freteSelecionado
-              ? `${freteSelecionado.servico} · aproximadamente ${freteSelecionado.prazoDias} dias úteis após a postagem.`
-              : "Calcule e selecione o frete na etapa de revisão."}
+            {FRETE_DESABILITADO
+              ? "Frete temporariamente zerado para testes do pagamento."
+              : freteSelecionado
+                ? `${freteSelecionado.servico} · aproximadamente ${freteSelecionado.prazoDias} dias úteis após a postagem.`
+                : "Calcule e selecione o frete na etapa de revisão."}
           </p>
         </aside>
       </section>

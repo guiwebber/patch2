@@ -10,6 +10,9 @@ import "./mercadoPagoPayment.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+const FRETE_DESABILITADO =
+  import.meta.env.VITE_DESABILITAR_FRETE === "true";
+
 const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY;
 
 if (publicKey) {
@@ -209,7 +212,10 @@ export default function MercadoPagoPayment({
 
           itens: itensDoCarrinho(cart),
 
-          freteId,
+          freteId:
+            FRETE_DESABILITADO
+              ? "teste"
+              : freteId,
         }),
       });
 
@@ -296,7 +302,10 @@ export default function MercadoPagoPayment({
 
           itens: itensDoCarrinho(cart),
 
-          freteId,
+          freteId:
+            FRETE_DESABILITADO
+              ? "teste"
+              : freteId,
 
           metodoSelecionado: metodo,
 

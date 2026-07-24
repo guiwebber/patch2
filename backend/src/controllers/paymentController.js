@@ -435,12 +435,30 @@ export async function criarPix(req, res) {
         enderecoId,
       });
 
-    const frete =
-      await validarOpcaoFrete({
-        cepDestino: endereco.cep,
-        itens: itensRecebidos,
-        freteId,
-      });
+    let frete;
+
+    if (
+      process.env
+        .DESABILITAR_FRETE ===
+      "true"
+    ) {
+      frete = {
+        id: "teste",
+        servico: "Sem frete",
+        transportadora: "",
+        valor: 0,
+        prazoDias: 0,
+      };
+    } else {
+      frete =
+        await validarOpcaoFrete({
+          cepDestino:
+            endereco.cep,
+          itens:
+            itensRecebidos,
+          freteId,
+        });
+    }
 
     const valores = calcularValores({
       itens,
@@ -576,12 +594,30 @@ export async function criarPagamentoCartao(
         enderecoId,
       });
 
-    const frete =
-      await validarOpcaoFrete({
-        cepDestino: endereco.cep,
-        itens: itensRecebidos,
-        freteId,
-      });
+    let frete;
+
+    if (
+      process.env
+        .DESABILITAR_FRETE ===
+      "true"
+    ) {
+      frete = {
+        id: "teste",
+        servico: "Sem frete",
+        transportadora: "",
+        valor: 0,
+        prazoDias: 0,
+      };
+    } else {
+      frete =
+        await validarOpcaoFrete({
+          cepDestino:
+            endereco.cep,
+          itens:
+            itensRecebidos,
+          freteId,
+        });
+    }
 
     const valores = calcularValores({
       itens,
