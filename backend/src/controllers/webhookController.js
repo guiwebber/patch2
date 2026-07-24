@@ -4,9 +4,7 @@ import {
 } from "mercadopago";
 
 import pool from "../config/db.js";
-import {
-  consultarPagamentoMercadoPago,
-} from "../services/mercadoPagoService.js";
+import { consultarPagamentoMercadoPago } from "../services/mercadoPagoService.js";
 
 function statusPagamentoLocal(status) {
   if (status === "approved") {
@@ -28,17 +26,11 @@ function statusPagamentoLocal(status) {
   return "pendente";
 }
 
-export async function mercadoPagoWebhook(
-  req,
-  res,
-) {
+export async function mercadoPagoWebhook(req, res) {
   try {
-    const secret =
-      process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+    const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
 
-    const dataId =
-      req.query["data.id"] ||
-      req.body?.data?.id;
+    const dataId = req.query["data.id"] || req.body?.data?.id;
 
     if (!dataId) {
       return res.sendStatus(200);
@@ -46,10 +38,8 @@ export async function mercadoPagoWebhook(
 
     if (secret) {
       WebhookSignatureValidator.validate({
-        xSignature:
-          req.headers["x-signature"],
-        xRequestId:
-          req.headers["x-request-id"],
+        xSignature: req.headers["x-signature"],
+        xRequestId: req.headers["x-request-id"],
         dataId: String(dataId),
         secret,
       });
@@ -59,32 +49,21 @@ export async function mercadoPagoWebhook(
       );
     }
 
-    const pagamento =
-      await consultarPagamentoMercadoPago(
-        dataId,
-      );
+    const pagamento = await consultarPagamentoMercadoPago(dataId);
 
-    const pedidoId = Number(
-      pagamento.external_reference,
-    );
+    const pedidoId = Number(pagamento.external_reference);
 
     if (!Number.isInteger(pedidoId)) {
-      console.warn(
-        "Pagamento sem external_reference válido:",
-        pagamento.id,
-      );
+      console.warn("Pagamento sem external_reference válido:", pagamento.id);
 
       return res.sendStatus(200);
     }
 
-    const aprovado =
-      pagamento.status === "approved";
+    const aprovado = pagamento.status === "approved";
 
-    const cancelado = [
-      "cancelled",
-      "refunded",
-      "charged_back",
-    ].includes(pagamento.status);
+    const cancelado = ["cancelled", "refunded", "charged_back"].includes(
+      pagamento.status,
+    );
 
     const resultado = await pool.query(
       `
@@ -97,11 +76,11 @@ export async function mercadoPagoWebhook(
         mercado_pago_status_detail = $5,
         status_pagamento = $6,
 
-        status = CASE
-          WHEN $7 THEN 'pago'
-          WHEN $8 THEN 'cancelado'
-          ELSE status
-        END,
+       status = CASE
+        WHEN $7 THEN 'em_producao'
+        WHEN $8 THEN 'cancelado'
+        ELSE status
+          END,
 
         pago_em = CASE
           WHEN $7 THEN
@@ -130,19 +109,15 @@ export async function mercadoPagoWebhook(
       [
         String(pagamento.id),
 
-        pagamento.payment_type_id ||
-          null,
+        pagamento.payment_type_id || null,
 
-        pagamento.payment_method_id ||
-          null,
+        pagamento.payment_method_id || null,
 
         pagamento.status || null,
 
         pagamento.status_detail || null,
 
-        statusPagamentoLocal(
-          pagamento.status,
-        ),
+        statusPagamentoLocal(pagamento.status),
 
         aprovado,
 
@@ -153,49 +128,35 @@ export async function mercadoPagoWebhook(
     );
 
     if (resultado.rows.length === 0) {
-      console.warn(
-        "Pedido não encontrado para o pagamento:",
-        {
-          pedidoId,
-          pagamentoId: pagamento.id,
-        },
-      );
+      console.warn("Pedido não encontrado para o pagamento:", {
+        pedidoId,
+        pagamentoId: pagamento.id,
+      });
 
       return res.sendStatus(200);
     }
 
-    console.log(
-      "Pedido atualizado pelo webhook:",
-      resultado.rows[0],
-    );
+    console.log("Pedido atualizado pelo webhook:", resultado.rows[0]);
 
     return res.sendStatus(200);
   } catch (error) {
-    if (
-      error instanceof
-      InvalidWebhookSignatureError
-    ) {
-      console.error(
-        "Assinatura do webhook inválida.",
-      );
+    if (error instanceof InvalidWebhookSignatureError) {
+      console.error("Assinatura do webhook inválida.");
 
       return res.sendStatus(401);
     }
 
-    console.error(
-      "Erro no webhook Mercado Pago:",
-      {
-        name: error?.name,
-        message: error?.message,
-        status: error?.status,
-        code: error?.code,
-        detail: error?.detail,
-        constraint: error?.constraint,
-        cause: error?.cause,
-        apiError: error?.apiError,
-        stack: error?.stack,
-      },
-    );
+    console.error("Erro no webhook Mercado Pago:", {
+      name: error?.name,
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+      detail: error?.detail,
+      constraint: error?.constraint,
+      cause: error?.cause,
+      apiError: error?.apiError,
+      stack: error?.stack,
+    });
 
     return res.sendStatus(500);
   }
