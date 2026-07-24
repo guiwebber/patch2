@@ -5,6 +5,7 @@ import {
 
 import pool from "../config/db.js";
 import { consultarPagamentoMercadoPago } from "../services/mercadoPagoService.js";
+import { tentarEnviarEmailDoPedido } from "../services/orderEmailService.js";
 
 function statusPagamentoLocal(status) {
   if (status === "approved") {
@@ -29,7 +30,6 @@ function statusPagamentoLocal(status) {
 export async function mercadoPagoWebhook(req, res) {
   try {
     const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-
     const dataId = req.query["data.id"] || req.body?.data?.id;
 
     if (!dataId) {
@@ -50,17 +50,14 @@ export async function mercadoPagoWebhook(req, res) {
     }
 
     const pagamento = await consultarPagamentoMercadoPago(dataId);
-
     const pedidoId = Number(pagamento.external_reference);
 
     if (!Number.isInteger(pedidoId)) {
       console.warn("Pagamento sem external_reference válido:", pagamento.id);
-
       return res.sendStatus(200);
     }
 
     const aprovado = pagamento.status === "approved";
-
     const cancelado = ["cancelled", "refunded", "charged_back"].includes(
       pagamento.status,
     );
@@ -76,21 +73,19 @@ export async function mercadoPagoWebhook(req, res) {
         mercado_pago_status_detail = $5,
         status_pagamento = $6,
 
-       status = CASE
-        WHEN $7 THEN 'em_producao'
-        WHEN $8 THEN 'cancelado'
-        ELSE status
-          END,
+        status = CASE
+          WHEN $7 THEN 'em_producao'
+          WHEN $8 THEN 'cancelado'
+          ELSE status
+        END,
 
         pago_em = CASE
-          WHEN $7 THEN
-            COALESCE(pago_em, NOW())
+          WHEN $7 THEN COALESCE(pago_em, NOW())
           ELSE pago_em
         END,
 
         cancelado_em = CASE
-          WHEN $8 THEN
-            COALESCE(cancelado_em, NOW())
+          WHEN $8 THEN COALESCE(cancelado_em, NOW())
           ELSE cancelado_em
         END,
 
@@ -108,21 +103,13 @@ export async function mercadoPagoWebhook(req, res) {
       `,
       [
         String(pagamento.id),
-
         pagamento.payment_type_id || null,
-
         pagamento.payment_method_id || null,
-
         pagamento.status || null,
-
         pagamento.status_detail || null,
-
         statusPagamentoLocal(pagamento.status),
-
         aprovado,
-
         cancelado,
-
         pedidoId,
       ],
     );
@@ -132,17 +119,29 @@ export async function mercadoPagoWebhook(req, res) {
         pedidoId,
         pagamentoId: pagamento.id,
       });
-
       return res.sendStatus(200);
     }
 
     console.log("Pedido atualizado pelo webhook:", resultado.rows[0]);
 
+    if (aprovado) {
+      await tentarEnviarEmailDoPedido({
+        pedidoId,
+        evento: "pagamento_aprovado",
+      });
+    }
+
+    if (cancelado) {
+      await tentarEnviarEmailDoPedido({
+        pedidoId,
+        evento: "cancelado",
+      });
+    }
+
     return res.sendStatus(200);
   } catch (error) {
     if (error instanceof InvalidWebhookSignatureError) {
       console.error("Assinatura do webhook inválida.");
-
       return res.sendStatus(401);
     }
 
