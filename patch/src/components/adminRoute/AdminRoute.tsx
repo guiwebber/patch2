@@ -9,18 +9,14 @@ import {
 } from "../../context/AuthContext";
 
 export default function AdminRoute() {
-  const location =
-    useLocation();
+  const location = useLocation();
 
   const {
     estaLogado,
-    ehAdministrador,
     carregandoAutenticacao,
   } = useAuth();
 
-  if (
-    carregandoAutenticacao
-  ) {
+  if (carregandoAutenticacao) {
     return (
       <main
         style={{
@@ -43,18 +39,8 @@ export default function AdminRoute() {
         to="/login"
         replace
         state={{
-          from:
-            location.pathname,
+          from: location.pathname,
         }}
-      />
-    );
-  }
-
-  if (!ehAdministrador) {
-    return (
-      <Navigate
-        to="/"
-        replace
       />
     );
   }
