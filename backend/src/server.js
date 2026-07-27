@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import pool from "./config/db.js";
+
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -12,11 +13,12 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
-
 import shippingRoutes from "./routes/shippingRoutes.js";
+
 const app = express();
 
-const PORT = process.env.PORT || 3001;
+const PORT =
+  process.env.PORT || 3001;
 
 const origensPermitidas = [
   "http://localhost:5173",
@@ -27,70 +29,103 @@ const origensPermitidas = [
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || origensPermitidas.includes(origin)) {
+      if (
+        !origin ||
+        origensPermitidas.includes(
+          origin,
+        )
+      ) {
         callback(null, true);
         return;
       }
 
-      console.error(`CORS bloqueou a origem: ${origin}`);
+      console.error(
+        `CORS bloqueou a origem: ${origin}`,
+      );
 
-      callback(new Error("Origem não permitida."));
+      callback(
+        new Error(
+          "Origem não permitida.",
+        ),
+      );
     },
 
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
 
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+    ],
   }),
 );
 
 app.use(express.json());
 
 app.use((req, res, next) => {
-  console.log(`[REQUISIÇÃO] ${req.method} ${req.originalUrl}`);
+  console.log(
+    `[REQUISIÇÃO] ${req.method} ${req.originalUrl}`,
+  );
 
   next();
 });
 
 app.get("/", (req, res) => {
   return res.json({
-    mensagem: "API PatchWork funcionando.",
+    mensagem:
+      "API PatchWork funcionando.",
   });
 });
 
-app.get("/teste-banco", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
+app.get(
+  "/teste-banco",
+  async (req, res) => {
+    try {
+      const result =
+        await pool.query(
+          "SELECT NOW()",
+        );
 
-    return res.json({
-      ok: true,
-      horario: result.rows[0].now,
-    });
-  } catch (error) {
-    console.error("Erro ao testar banco:", error);
+      return res.json({
+        ok: true,
+        horario:
+          result.rows[0].now,
+      });
+    } catch (error) {
+      console.error(
+        "Erro ao testar banco:",
+        error,
+      );
 
-    return res.status(500).json({
-      ok: false,
-      erro: error instanceof Error ? error.message : "Erro desconhecido.",
-    });
-  }
-});
+      return res.status(500).json({
+        ok: false,
+        erro:
+          error instanceof Error
+            ? error.message
+            : "Erro desconhecido.",
+      });
+    }
+  },
+);
 
 /*
- * O webhook não usa o JWT do cliente.
+ * Rotas totalmente públicas.
  */
 app.use(webhookRoutes);
-
 app.use(authRoutes);
-app.use(profileRoutes);
-
-/*
- * Produtos públicos precisam ficar antes
- * das rotas protegidas do administrador.
- */ app.get("/teste-produtos", (req, res) => {
-  res.json({ ok: true });
-});
 app.use(productRoutes);
 
+/*
+ * Rotas que podem usar autenticação.
+ */
+app.use(profileRoutes);
 app.use(paymentRoutes);
 app.use(orderRoutes);
 app.use(shippingRoutes);
@@ -99,12 +134,19 @@ app.use(shippingRoutes);
  * Rotas administrativas por último.
  */
 app.use(adminRoutes);
+
 app.use((req, res) => {
   return res.status(404).json({
     erro: "Rota não encontrada.",
   });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `Servidor rodando na porta ${PORT}`,
+    );
+  },
+);

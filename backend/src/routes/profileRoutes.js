@@ -16,8 +16,11 @@ import {
 import { autenticarUsuario } from "../middlewares/authMiddleware.js";
 
 const profileRoutes = Router();
-
-profileRoutes.use(autenticarUsuario);
+profileRoutes.get(
+  "/perfil",
+  autenticarUsuario,
+  buscarPerfil,
+);
 
 profileRoutes.get("/perfil", buscarPerfil);
 profileRoutes.patch("/perfil", atualizarPerfil);
