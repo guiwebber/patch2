@@ -3,18 +3,25 @@ import crypto from "node:crypto";
 function obterConfiguracao() {
   const supabaseUrl = String(
     process.env.SUPABASE_URL || "",
-  ).replace(/\/+$/, "");
+  )
+    .trim()
+    .replace(/\/+$/, "");
 
   const serviceRoleKey = String(
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    process.env
+      .SUPABASE_SERVICE_ROLE_KEY || "",
   ).trim();
 
   const bucket = String(
-    process.env.SUPABASE_PRODUCT_BUCKET || "produtos",
+    process.env
+      .SUPABASE_PRODUCT_BUCKET ||
+      "produtos",
   ).trim();
 
   if (!supabaseUrl) {
-    throw new Error("SUPABASE_URL não configurada.");
+    throw new Error(
+      "SUPABASE_URL não configurada.",
+    );
   }
 
   if (!serviceRoleKey) {
@@ -37,15 +44,40 @@ function obterConfiguracao() {
 }
 
 function nomeSeguro(nomeOriginal) {
-  const nome = String(nomeOriginal || "imagem")
+  const nome = String(
+    nomeOriginal || "imagem",
+  )
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(
+      /[\u0300-\u036f]/g,
+      "",
+    )
     .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(
+      /[^a-z0-9._-]+/g,
+      "-",
+    )
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
   return nome || "imagem";
+}
+
+async function lerResposta(response) {
+  const texto =
+    await response.text();
+
+  if (!texto) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(texto);
+  } catch {
+    return {
+      message: texto,
+    };
+  }
 }
 
 export async function enviarImagemProduto(
@@ -57,49 +89,90 @@ export async function enviarImagemProduto(
     bucket,
   } = obterConfiguracao();
 
+  if (!arquivo?.buffer) {
+    throw new Error(
+      "Arquivo de imagem inválido.",
+    );
+  }
+
   const caminho = [
     "produtos",
-    new Date().toISOString().slice(0, 10),
+    new Date()
+      .toISOString()
+      .slice(0, 10),
+
     `${Date.now()}-${crypto.randomUUID()}-${nomeSeguro(
       arquivo.originalname,
     )}`,
   ].join("/");
 
-  const response = await fetch(
-    `${supabaseUrl}/storage/v1/object/${bucket}/${caminho}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${serviceRoleKey}`,
-        apikey: serviceRoleKey,
-        "Content-Type": arquivo.mimetype,
-        "x-upsert": "false",
-      },
-      body: arquivo.buffer,
-    },
-  );
-
-  if (!response.ok) {
-    const data = await response
-      .json()
-      .catch(() => null);
-
-    throw new Error(
-      data?.message ||
-        data?.error ||
-        "Não foi possível enviar a imagem ao Supabase Storage.",
-    );
-  }
-
-  const caminhoPublico = caminho
+  const caminhoCodificado = caminho
     .split("/")
     .map(encodeURIComponent)
     .join("/");
 
+  const bucketCodificado =
+    encodeURIComponent(bucket);
+
+  /*
+   * Chaves antigas começam com eyJ.
+   * Chaves novas começam com sb_secret_.
+   */
+  const chaveLegacy =
+    serviceRoleKey.startsWith("eyJ");
+
+  const headers = {
+    apikey: serviceRoleKey,
+
+    "Content-Type":
+      arquivo.mimetype,
+
+    "x-upsert": "false",
+  };
+
+  /*
+   * Authorization Bearer deve ser usado
+   * somente com a chave JWT legacy.
+   */
+  if (chaveLegacy) {
+    headers.Authorization =
+      `Bearer ${serviceRoleKey}`;
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/storage/v1/object/` +
+      `${bucketCodificado}/${caminhoCodificado}`,
+    {
+      method: "POST",
+      headers,
+      body: arquivo.buffer,
+    },
+  );
+
+  const data =
+    await lerResposta(response);
+
+  if (!response.ok) {
+    console.error(
+      "Supabase recusou o upload:",
+      {
+        status: response.status,
+        data,
+      },
+    );
+
+    throw new Error(
+      data?.message ||
+        data?.error ||
+        `Erro no upload (${response.status}).`,
+    );
+  }
+
   return {
     caminho,
+
     url:
       `${supabaseUrl}/storage/v1/object/public/` +
-      `${encodeURIComponent(bucket)}/${caminhoPublico}`,
+      `${bucketCodificado}/${caminhoCodificado}`,
   };
 }
