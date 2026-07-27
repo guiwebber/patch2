@@ -89,11 +89,11 @@ export default function MenuBar() {
   }
 
   function handleLogout() {
-    clearFavorites();
-    sair();
-    closeMenus();
-    navigate("/");
-  }
+  sair();
+  closeMenus();
+  setFavoritesOpen(false);
+  navigate("/");
+}
 
   function viewFavoriteProduct(category: string) {
     setSelectedCategory(category);

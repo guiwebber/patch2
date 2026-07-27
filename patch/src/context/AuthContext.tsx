@@ -23,81 +23,147 @@ type AuthContextData = {
   ehAdministrador: boolean;
   carregandoAutenticacao: boolean;
 
-  entrar: (usuario: Usuario, token: string) => void;
+  entrar: (
+    usuario: Usuario,
+    token: string,
+  ) => void;
 
-  atualizarUsuario: (usuario: Usuario) => void;
+  atualizarUsuario: (
+    usuario: Usuario,
+  ) => void;
 
   sair: () => void;
 };
 
-const AuthContext = createContext<AuthContextData | undefined>(undefined);
+const AuthContext =
+  createContext<
+    AuthContextData | undefined
+  >(undefined);
+
 type AuthProviderProps = {
   children: ReactNode;
 };
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
+  const [usuario, setUsuario] =
+    useState<Usuario | null>(null);
 
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] =
+    useState<string | null>(null);
 
-  const [carregandoAutenticacao, setCarregandoAutenticacao] = useState(true);
+  const [
+    carregandoAutenticacao,
+    setCarregandoAutenticacao,
+  ] = useState(true);
 
   useEffect(() => {
-    const usuarioSalvo = localStorage.getItem("usuario");
-    const tokenSalvo = localStorage.getItem("token");
+    const usuarioSalvo =
+      localStorage.getItem("usuario");
 
-    if (usuarioSalvo && tokenSalvo) {
+    const tokenSalvo =
+      localStorage.getItem("token");
+
+    if (
+      usuarioSalvo &&
+      tokenSalvo
+    ) {
       try {
-        setUsuario(JSON.parse(usuarioSalvo));
+        const usuarioConvertido =
+          JSON.parse(
+            usuarioSalvo,
+          ) as Usuario;
+
+        setUsuario(
+          usuarioConvertido,
+        );
+
         setToken(tokenSalvo);
       } catch {
-        localStorage.removeItem("usuario");
-        localStorage.removeItem("token");
+        localStorage.removeItem(
+          "usuario",
+        );
+
+        localStorage.removeItem(
+          "token",
+        );
       }
     }
 
-    setCarregandoAutenticacao(false);
+    setCarregandoAutenticacao(
+      false,
+    );
   }, []);
 
-  function entrar(usuarioRecebido: Usuario, tokenRecebido: string) {
-    localStorage.setItem("usuario", JSON.stringify(usuarioRecebido));
+  function entrar(
+    usuarioRecebido: Usuario,
+    tokenRecebido: string,
+  ) {
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(
+        usuarioRecebido,
+      ),
+    );
 
-    localStorage.setItem("token", tokenRecebido);
+    localStorage.setItem(
+      "token",
+      tokenRecebido,
+    );
 
     setUsuario(usuarioRecebido);
-
     setToken(tokenRecebido);
   }
 
-  function atualizarUsuario(usuarioAtualizado: Usuario) {
-    localStorage.setItem("usuario", JSON.stringify(usuarioAtualizado));
+  function atualizarUsuario(
+    usuarioAtualizado: Usuario,
+  ) {
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(
+        usuarioAtualizado,
+      ),
+    );
 
-    setUsuario(usuarioAtualizado);
+    setUsuario(
+      usuarioAtualizado,
+    );
   }
 
   function sair() {
-  localStorage.removeItem("usuario");
-  localStorage.removeItem("token");
-  localStorage.removeItem("favoritos");
+    /*
+     * Não apaga os favoritos.
+     * O StoreContext trocará automaticamente
+     * para a lista de visitante.
+     */
+    localStorage.removeItem(
+      "usuario",
+    );
 
-  setUsuario(null);
-  setToken(null);
+    localStorage.removeItem(
+      "token",
+    );
 
-  window.dispatchEvent(
-    new Event("favoritos-limpos"),
-  );
-}
-  const estaLogado = Boolean(usuario && token);
+    setUsuario(null);
+    setToken(null);
+  }
 
-  const ehAdministrador = Boolean(usuario?.administrador);
+  const estaLogado =
+    Boolean(usuario && token);
+
+  const ehAdministrador =
+    Boolean(
+      usuario?.administrador,
+    );
 
   return (
     <AuthContext.Provider
       value={{
         usuario,
         token,
-        estaLogado: Boolean(usuario && token),
-        ehAdministrador: Boolean(usuario?.administrador),
+        estaLogado,
+        ehAdministrador,
         carregandoAutenticacao,
         entrar,
         atualizarUsuario,
@@ -110,10 +176,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth precisa ser utilizado dentro do AuthProvider.");
+    throw new Error(
+      "useAuth precisa ser utilizado dentro do AuthProvider.",
+    );
   }
 
   return context;

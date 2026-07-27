@@ -3,28 +3,46 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
-import type { Product } from "../../types/product";
+import type {
+  Product,
+} from "../../types/product";
+
+import {
+  useAuth,
+} from "./AuthContext";
 
 type StoreContextData = {
   favorites: Product[];
   favoritesOpen: boolean;
   selectedCategory: string;
 
-  setFavoritesOpen: (open: boolean) => void;
-  setSelectedCategory: (category: string) => void;
+  setFavoritesOpen: (
+    open: boolean,
+  ) => void;
 
-  toggleFavorite: (product: Product) => void;
-  removeFavorite: (productId: number) => void;
+  setSelectedCategory: (
+    category: string,
+  ) => void;
+
+  toggleFavorite: (
+    product: Product,
+  ) => void;
+
+  removeFavorite: (
+    productId: number,
+  ) => void;
+
   clearFavorites: () => void;
-  isFavorite: (productId: number) => boolean;
-};
 
-const FAVORITES_KEY =
-  "patchwork:favorites";
+  isFavorite: (
+    productId: number,
+  ) => boolean;
+};
 
 const StoreContext =
   createContext<
@@ -35,24 +53,40 @@ type StoreProviderProps = {
   children: ReactNode;
 };
 
-function readSavedFavorites(): Product[] {
+function criarChaveFavoritos(
+  usuarioId?: number,
+) {
+  if (
+    Number.isInteger(usuarioId)
+  ) {
+    return `patchwork:favorites:usuario:${usuarioId}`;
+  }
+
+  return "patchwork:favorites:visitante";
+}
+
+function lerFavoritosSalvos(
+  chave: string,
+): Product[] {
   try {
-    const savedFavorites =
+    const favoritosSalvos =
       localStorage.getItem(
-        FAVORITES_KEY,
+        chave,
       );
 
-    if (!savedFavorites) {
+    if (!favoritosSalvos) {
       return [];
     }
 
-    const parsedFavorites =
-      JSON.parse(savedFavorites);
+    const favoritosConvertidos =
+      JSON.parse(
+        favoritosSalvos,
+      );
 
     return Array.isArray(
-      parsedFavorites,
+      favoritosConvertidos,
     )
-      ? parsedFavorites
+      ? favoritosConvertidos
       : [];
   } catch {
     return [];
@@ -62,12 +96,20 @@ function readSavedFavorites(): Product[] {
 export function StoreProvider({
   children,
 }: StoreProviderProps) {
+  const {
+    usuario,
+    carregandoAutenticacao,
+  } = useAuth();
+
+  const chaveFavoritos =
+    criarChaveFavoritos(
+      usuario?.id,
+    );
+
   const [
     favorites,
     setFavorites,
-  ] = useState<Product[]>(
-    readSavedFavorites,
-  );
+  ] = useState<Product[]>([]);
 
   const [
     favoritesOpen,
@@ -79,26 +121,84 @@ export function StoreProvider({
     setSelectedCategory,
   ] = useState("Todos");
 
+  /*
+   * Evita salvar os favoritos da conta
+   * anterior na chave da nova conta
+   * durante a troca de usuário.
+   */
+  const ignorarProximoSalvamento =
+    useRef(true);
+
   useEffect(() => {
-    if (favorites.length === 0) {
+    if (
+      carregandoAutenticacao
+    ) {
+      return;
+    }
+
+    const favoritosDaConta =
+      lerFavoritosSalvos(
+        chaveFavoritos,
+      );
+
+    ignorarProximoSalvamento.current =
+      true;
+
+    setFavorites(
+      favoritosDaConta,
+    );
+
+    setFavoritesOpen(false);
+  }, [
+    carregandoAutenticacao,
+    chaveFavoritos,
+  ]);
+
+  useEffect(() => {
+    if (
+      carregandoAutenticacao
+    ) {
+      return;
+    }
+
+    if (
+      ignorarProximoSalvamento.current
+    ) {
+      ignorarProximoSalvamento.current =
+        false;
+
+      return;
+    }
+
+    if (
+      favorites.length === 0
+    ) {
       localStorage.removeItem(
-        FAVORITES_KEY,
+        chaveFavoritos,
       );
 
       return;
     }
 
     localStorage.setItem(
-      FAVORITES_KEY,
-      JSON.stringify(favorites),
+      chaveFavoritos,
+      JSON.stringify(
+        favorites,
+      ),
     );
-  }, [favorites]);
+  }, [
+    favorites,
+    chaveFavoritos,
+    carregandoAutenticacao,
+  ]);
 
   function toggleFavorite(
     product: Product,
   ) {
     setFavorites(
-      (currentFavorites) => {
+      (
+        currentFavorites,
+      ) => {
         const alreadyFavorite =
           currentFavorites.some(
             (favorite) =>
@@ -126,7 +226,9 @@ export function StoreProvider({
     productId: number,
   ) {
     setFavorites(
-      (currentFavorites) =>
+      (
+        currentFavorites,
+      ) =>
         currentFavorites.filter(
           (favorite) =>
             favorite.id !==
@@ -140,7 +242,7 @@ export function StoreProvider({
     setFavoritesOpen(false);
 
     localStorage.removeItem(
-      FAVORITES_KEY,
+      chaveFavoritos,
     );
   }
 
