@@ -8,6 +8,7 @@ export type Product = {
   image: string;
   images?: string[];
   featured?: boolean;
+  active?: boolean;
 
   peso: number;
   altura: number;

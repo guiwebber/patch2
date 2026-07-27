@@ -25,6 +25,7 @@ import MenuBar from "./components/menu/menu";
 
 import Account from "../pages/account/account";
 import Admin from "../pages/admin/admin";
+import AdminProducts from "../pages/adminProducts/adminProducts";
 import About from "../pages/about/about";
 import Checkout from "../pages/checkout/checkout";
 import Home from "../pages/home/home";
@@ -98,6 +99,11 @@ createRoot(
                 <Route
                   path="/admin"
                   element={<Admin />}
+                />
+
+                <Route
+                  path="/admin/produtos"
+                  element={<AdminProducts />}
                 />
               </Route>
             </Routes>

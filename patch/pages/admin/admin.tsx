@@ -11,6 +11,7 @@ import {
   CircleDollarSign,
   LoaderCircle,
   Package,
+  Plus,
   RefreshCw,
   Search,
   Send,
@@ -575,18 +576,25 @@ export default function Admin() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="admin-refresh"
-            onClick={() =>
-              void carregarTudo()
-            }
-          >
-            <RefreshCw
-              size={18}
-            />
-            Atualizar
-          </button>
+          <div className="admin-header-actions">
+            <button
+              type="button"
+              className="admin-refresh"
+              onClick={() => navigate("/admin/produtos")}
+            >
+              <Plus size={18} />
+              Gerenciar produtos
+            </button>
+
+            <button
+              type="button"
+              className="admin-refresh"
+              onClick={() => void carregarTudo()}
+            >
+              <RefreshCw size={18} />
+              Atualizar
+            </button>
+          </div>
         </header>
 
         {erro && (

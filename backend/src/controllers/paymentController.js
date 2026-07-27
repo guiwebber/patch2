@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import pool from "../config/db.js";
-import { buscarProduto } from "../data/products.js";
+import { buscarProdutosPorIds } from "../services/productService.js";
 import {
   criarPagamentoMercadoPago,
 } from "../services/mercadoPagoService.js";
@@ -29,34 +29,28 @@ function validarItens(itens) {
   );
 }
 
-function montarItensConfiaveis(itensRecebidos) {
+async function montarItensConfiaveis(itensRecebidos) {
   if (!validarItens(itensRecebidos)) {
-    throw new Error(
-      "Os itens do pedido são inválidos.",
-    );
+    throw new Error("Os itens do pedido são inválidos.");
   }
 
+  const produtos = await buscarProdutosPorIds(
+    itensRecebidos.map((item) => item.produtoId),
+  );
+
+  const mapa = new Map(produtos.map((produto) => [produto.id, produto]));
+
   return itensRecebidos.map((item) => {
-    const produto = buscarProduto(
-      item.produtoId,
-    );
+    const produto = mapa.get(Number(item.produtoId));
 
     if (!produto) {
-      throw new Error(
-        `Produto ${item.produtoId} não encontrado.`,
-      );
+      throw new Error(`Produto ${item.produtoId} não encontrado ou inativo.`);
     }
 
     const quantidade = Number(item.quantidade);
-    const subtotal = moeda(
-      produto.preco * quantidade,
-    );
+    const subtotal = moeda(produto.preco * quantidade);
 
-    return {
-      ...produto,
-      quantidade,
-      subtotal,
-    };
+    return { ...produto, quantidade, subtotal };
   });
 }
 
@@ -427,7 +421,7 @@ export async function criarPix(req, res) {
     } = req.body;
 
     const itens =
-      montarItensConfiaveis(itensRecebidos);
+      await montarItensConfiaveis(itensRecebidos);
 
     const { cliente, endereco } =
       await buscarClienteEEndereco({
@@ -436,10 +430,6 @@ export async function criarPix(req, res) {
       });
 
     let frete;
-console.log(
-  "DESABILITAR_FRETE:",
-  process.env.DESABILITAR_FRETE,
-);
     if (
       process.env
         .DESABILITAR_FRETE ===
@@ -589,7 +579,7 @@ export async function criarPagamentoCartao(
     }
 
     const itens =
-      montarItensConfiaveis(itensRecebidos);
+      await montarItensConfiaveis(itensRecebidos);
 
     const { cliente, endereco } =
       await buscarClienteEEndereco({
@@ -598,10 +588,6 @@ export async function criarPagamentoCartao(
       });
 
     let frete;
-console.log(
-  "DESABILITAR_FRETE:",
-  process.env.DESABILITAR_FRETE,
-);
     if (
       process.env
         .DESABILITAR_FRETE ===

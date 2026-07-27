@@ -1,6 +1,4 @@
-import {
-  buscarProduto,
-} from "../data/products.js";
+import { buscarProdutosPorIds } from "./productService.js";
 
 const SUPERFRETE_PRODUCAO_URL =
   "https://api.superfrete.com/api/v0";
@@ -57,56 +55,32 @@ function obterApiUrl() {
   ).replace(/\/+$/, "");
 }
 
-export function montarProdutosFrete(
-  itensRecebidos,
-) {
-  if (
-    !Array.isArray(itensRecebidos) ||
-    itensRecebidos.length === 0
-  ) {
-    throw new Error(
-      "Informe os itens para calcular o frete.",
-    );
+export async function montarProdutosFrete(itensRecebidos) {
+  if (!Array.isArray(itensRecebidos) || itensRecebidos.length === 0) {
+    throw new Error("Informe os itens para calcular o frete.");
   }
 
-  return itensRecebidos.map(
-    (item) => {
-      const produto =
-        buscarProduto(
-          item.produtoId,
-        );
-
-      const quantidade =
-        Number(item.quantidade);
-
-      if (
-        !produto ||
-        !Number.isInteger(
-          quantidade,
-        ) ||
-        quantidade <= 0 ||
-        quantidade > 50
-      ) {
-        throw new Error(
-          "Os itens do frete são inválidos.",
-        );
-      }
-
-      return {
-        quantity: quantidade,
-        weight:
-          Number(produto.peso),
-        height:
-          Number(produto.altura),
-        width:
-          Number(produto.largura),
-        length:
-          Number(
-            produto.comprimento,
-          ),
-      };
-    },
+  const produtos = await buscarProdutosPorIds(
+    itensRecebidos.map((item) => item.produtoId),
   );
+  const mapa = new Map(produtos.map((produto) => [produto.id, produto]));
+
+  return itensRecebidos.map((item) => {
+    const produto = mapa.get(Number(item.produtoId));
+    const quantidade = Number(item.quantidade);
+
+    if (!produto || !Number.isInteger(quantidade) || quantidade <= 0 || quantidade > 50) {
+      throw new Error("Os itens do frete são inválidos.");
+    }
+
+    return {
+      quantity: quantidade,
+      weight: Number(produto.peso),
+      height: Number(produto.altura),
+      width: Number(produto.largura),
+      length: Number(produto.comprimento),
+    };
+  });
 }
 
 function normalizarCotacao(
@@ -205,7 +179,7 @@ export async function cotarFreteSuperFrete({
             false,
         },
         products:
-          montarProdutosFrete(
+          await montarProdutosFrete(
             itens,
           ),
       }),

@@ -17,10 +17,14 @@ import {
 import { useAuth } from "../../src/context/AuthContext";
 import { useCart } from "../../src/context/CartContext";
 import { useStore } from "../../src/context/StoreContext";
-import { categories, products } from "../../data/products";
+import { categories } from "../../data/products";
 import type { Product } from "../../types/product";
 
 import "./home.css";
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3001";
 
 const heroSlides = [
   {
@@ -70,6 +74,10 @@ export default function Home() {
     isFavorite,
   } = useStore();
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] =
     useState<Product | null>(null);
@@ -84,6 +92,38 @@ export default function Home() {
 
   const [cartOpen, setCartOpen] =
     useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarProdutos() {
+      try {
+        setProductsLoading(true);
+        const response = await fetch(`${API_URL}/produtos`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.erro || "Não foi possível carregar os produtos.");
+        }
+
+        if (ativo) {
+          setProducts(Array.isArray(data.produtos) ? data.produtos : []);
+          setProductsError("");
+        }
+      } catch (error) {
+        if (ativo) {
+          setProductsError(
+            error instanceof Error ? error.message : "Erro ao carregar produtos.",
+          );
+        }
+      } finally {
+        if (ativo) setProductsLoading(false);
+      }
+    }
+
+    void carregarProdutos();
+    return () => { ativo = false; };
+  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -379,7 +419,11 @@ export default function Home() {
           </div>
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {productsLoading ? (
+          <div className="no-products"><h3>Carregando produtos...</h3></div>
+        ) : productsError ? (
+          <div className="no-products"><h3>Não foi possível carregar</h3><p>{productsError}</p></div>
+        ) : filteredProducts.length === 0 ? (
           <div className="no-products">
             <Search size={42} />
 

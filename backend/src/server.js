@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 
 import shippingRoutes from "./routes/shippingRoutes.js";
@@ -120,6 +121,7 @@ app.use(webhookRoutes);
 
 app.use(authRoutes);
 app.use(profileRoutes);
+app.use(productRoutes);
 app.use(paymentRoutes);
 app.use(orderRoutes);
 app.use(adminRoutes);
