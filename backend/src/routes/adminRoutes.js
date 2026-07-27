@@ -13,6 +13,7 @@ import {
   criarProdutoAdmin,
   excluirProdutoAdmin,
   listarProdutosAdmin,
+  uploadImagensProdutoAdmin,
 } from "../controllers/adminProductController.js";
 import {
   autorizarAdministrador,
@@ -20,6 +21,9 @@ import {
 import {
   autenticarUsuario,
 } from "../middlewares/authMiddleware.js";
+import {
+  receberImagensProduto,
+} from "../middlewares/productImageUploadMiddleware.js";
 
 const adminRoutes = Router();
 
@@ -41,6 +45,12 @@ adminRoutes.get(
 adminRoutes.patch(
   "/admin/pedidos/:id/status",
   atualizarStatusPedidoAdmin,
+);
+
+adminRoutes.post(
+  "/admin/produtos/imagens",
+  receberImagensProduto,
+  uploadImagensProdutoAdmin,
 );
 
 adminRoutes.get("/admin/produtos", listarProdutosAdmin);

@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import { mapearProdutoBanco } from "../services/productService.js";
+import { enviarImagemProduto } from "../services/supabaseStorageService.js";
 
 function texto(valor) {
   return String(valor ?? "").trim();
@@ -235,5 +236,49 @@ export async function excluirProdutoAdmin(req, res) {
   } catch (error) {
     console.error("Erro ao excluir produto:", error);
     return res.status(500).json({ erro: "Erro interno ao excluir produto." });
+  }
+}
+
+
+export async function uploadImagensProdutoAdmin(
+  req,
+  res,
+) {
+  const arquivos = Array.isArray(req.files)
+    ? req.files
+    : [];
+
+  if (arquivos.length === 0) {
+    return res.status(400).json({
+      erro: "Selecione pelo menos uma imagem.",
+    });
+  }
+
+  try {
+    const imagens = await Promise.all(
+      arquivos.map(enviarImagemProduto),
+    );
+
+    return res.status(201).json({
+      mensagem:
+        imagens.length === 1
+          ? "Imagem enviada com sucesso."
+          : "Imagens enviadas com sucesso.",
+      imagens,
+      urls: imagens.map(
+        (imagem) => imagem.url,
+      ),
+    });
+  } catch (error) {
+    console.error(
+      "Erro ao enviar imagens do produto:",
+      error,
+    );
+
+    return res.status(500).json({
+      erro:
+        error?.message ||
+        "Erro interno ao enviar as imagens.",
+    });
   }
 }

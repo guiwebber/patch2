@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ImagePlus, LoaderCircle, Pencil, Plus, Save, Star, Trash2, Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../src/context/AuthContext";
 import type { Product } from "../../types/product";
 import "./adminProducts.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+const CATEGORIAS_PADRAO = [
+  "Cozinha",
+  "Decoração",
+  "Bolsas",
+  "Guirlandas",
+  "Páscoa",
+  "Natal",
+  "Banheiro",
+];
 
 type FormState = {
   nome: string; categoria: string; descricao: string;
@@ -31,6 +41,7 @@ export default function AdminProducts() {
   const [modalAberto, setModalAberto] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [enviandoImagens, setEnviandoImagens] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
 
@@ -38,6 +49,21 @@ export default function AdminProducts() {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   }), [token]);
+
+  const categoriasDisponiveis = useMemo(() => {
+    const categoriasDosProdutos = produtos
+      .map((produto) => produto.category.trim())
+      .filter(Boolean);
+
+    return Array.from(
+      new Set([
+        ...CATEGORIAS_PADRAO,
+        ...categoriasDosProdutos,
+      ]),
+    ).sort((a, b) =>
+      a.localeCompare(b, "pt-BR"),
+    );
+  }, [produtos]);
 
   const carregar = useCallback(async () => {
     if (!token) return;
@@ -76,12 +102,156 @@ export default function AdminProducts() {
     setErro(""); setMensagem(""); setModalAberto(true);
   }
 
+  function obterImagensFormulario() {
+    return form.imagensTexto
+      .split(/\r?\n|,/)
+      .map((valor) => valor.trim())
+      .filter(Boolean);
+  }
+
+  function atualizarGaleria(
+    imagens: string[],
+    imagemPrincipal = form.imagem,
+  ) {
+    const lista = [
+      ...new Set(
+        [imagemPrincipal, ...imagens]
+          .map((valor) => valor.trim())
+          .filter(Boolean),
+      ),
+    ];
+
+    setForm((atual) => ({
+      ...atual,
+      imagem: imagemPrincipal || lista[0] || "",
+      imagensTexto: lista.join("\n"),
+    }));
+  }
+
+  function definirImagemPrincipal(url: string) {
+    const outras = obterImagensFormulario().filter(
+      (imagem) => imagem !== url,
+    );
+
+    atualizarGaleria(
+      [url, ...outras],
+      url,
+    );
+  }
+
+  function removerImagem(url: string) {
+    const restantes = obterImagensFormulario().filter(
+      (imagem) => imagem !== url,
+    );
+
+    const novaPrincipal =
+      form.imagem === url
+        ? restantes[0] || ""
+        : form.imagem;
+
+    atualizarGaleria(
+      restantes,
+      novaPrincipal,
+    );
+  }
+
+  async function selecionarArquivos(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const arquivos = Array.from(
+      event.target.files || [],
+    );
+
+    event.target.value = "";
+
+    if (arquivos.length === 0) {
+      return;
+    }
+
+    if (arquivos.length > 10) {
+      setErro(
+        "Selecione no máximo 10 imagens por vez.",
+      );
+      return;
+    }
+
+    const dados = new FormData();
+
+    arquivos.forEach((arquivo) => {
+      dados.append("imagens", arquivo);
+    });
+
+    try {
+      setEnviandoImagens(true);
+      setErro("");
+
+      const response = await fetch(
+        `${API_URL}/admin/produtos/imagens`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: dados,
+        },
+      );
+
+      if (response.status === 401) {
+        sair();
+        navigate("/login");
+        return;
+      }
+
+      if (response.status === 403) {
+        navigate("/");
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.erro ||
+            "Não foi possível enviar as imagens.",
+        );
+      }
+
+      const urls: string[] = Array.isArray(
+        data.urls,
+      )
+        ? data.urls
+        : [];
+
+      const atuais = obterImagensFormulario();
+      const principal =
+        form.imagem || urls[0] || "";
+
+      atualizarGaleria(
+        [...atuais, ...urls],
+        principal,
+      );
+
+      setMensagem(
+        data.mensagem ||
+          "Imagens enviadas com sucesso.",
+      );
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : "Erro ao enviar as imagens.",
+      );
+    } finally {
+      setEnviandoImagens(false);
+    }
+  }
+
   function payload() {
     return {
       ...form,
       preco: Number(form.preco),
       precoAntigo: form.precoAntigo ? Number(form.precoAntigo) : null,
-      imagens: form.imagensTexto.split(/\r?\n|,/).map((v) => v.trim()).filter(Boolean),
+      imagens: obterImagensFormulario(),
       peso: Number(form.peso), altura: Number(form.altura),
       largura: Number(form.largura), comprimento: Number(form.comprimento),
       producaoMinDias: Number(form.producaoMinDias),
@@ -173,12 +343,176 @@ export default function AdminProducts() {
             <h2>{editandoId ? "Editar produto" : "Cadastrar produto"}</h2>
             <div className="products-admin-form-grid">
               <label><span>Nome</span><input required value={form.nome} onChange={(e) => setForm({...form,nome:e.target.value})}/></label>
-              <label><span>Categoria</span><input required value={form.categoria} onChange={(e) => setForm({...form,categoria:e.target.value})}/></label>
+              <label>
+                <span>Categoria</span>
+
+                <select
+                  required
+                  value={form.categoria}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      categoria:
+                        event.target.value,
+                    })
+                  }
+                >
+                  <option value="">
+                    Selecione uma categoria
+                  </option>
+
+                  {categoriasDisponiveis.map(
+                    (categoria) => (
+                      <option
+                        key={categoria}
+                        value={categoria}
+                      >
+                        {categoria}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
               <label className="full"><span>Descrição</span><textarea required value={form.descricao} onChange={(e) => setForm({...form,descricao:e.target.value})}/></label>
               <label><span>Preço</span><input required type="number" min="0.01" step="0.01" value={form.preco} onChange={(e) => setForm({...form,preco:e.target.value})}/></label>
               <label><span>Preço antigo (opcional)</span><input type="number" min="0.01" step="0.01" value={form.precoAntigo} onChange={(e) => setForm({...form,precoAntigo:e.target.value})}/></label>
-              <label className="full"><span>Imagem principal (URL)</span><input required type="url" value={form.imagem} onChange={(e) => setForm({...form,imagem:e.target.value})}/></label>
-              <label className="full"><span>Outras imagens — uma URL por linha</span><textarea value={form.imagensTexto} onChange={(e) => setForm({...form,imagensTexto:e.target.value})}/></label>
+              <section className="products-admin-images full">
+                <div className="products-admin-images-heading">
+                  <div>
+                    <strong>Imagens do produto</strong>
+                    <span>
+                      Selecione fotos do computador ou celular.
+                      A primeira será usada como principal.
+                    </span>
+                  </div>
+
+                  <label className={
+                    enviandoImagens
+                      ? "products-admin-upload disabled"
+                      : "products-admin-upload"
+                  }>
+                    {enviandoImagens ? (
+                      <LoaderCircle
+                        className="products-admin-spin"
+                        size={18}
+                      />
+                    ) : (
+                      <Upload size={18} />
+                    )}
+
+                    {enviandoImagens
+                      ? "Enviando..."
+                      : "Selecionar fotos"}
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      multiple
+                      disabled={enviandoImagens}
+                      onChange={(event) =>
+                        void selecionarArquivos(event)
+                      }
+                    />
+                  </label>
+                </div>
+
+                <small className="products-admin-images-help">
+                  Até 10 imagens por envio e no máximo 8 MB por
+                  arquivo. No celular, o seletor permite usar a
+                  galeria ou a câmera, conforme o aparelho.
+                </small>
+
+                {obterImagensFormulario().length > 0 ? (
+                  <div className="products-admin-image-grid">
+                    {obterImagensFormulario().map((url) => (
+                      <article
+                        key={url}
+                        className={
+                          form.imagem === url
+                            ? "products-admin-image-preview principal"
+                            : "products-admin-image-preview"
+                        }
+                      >
+                        <img src={url} alt="Prévia do produto" />
+
+                        {form.imagem === url && (
+                          <span className="products-admin-main-badge">
+                            <Star size={13} /> Principal
+                          </span>
+                        )}
+
+                        <div className="products-admin-image-actions">
+                          {form.imagem !== url && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                definirImagemPrincipal(url)
+                              }
+                            >
+                              <ImagePlus size={15} /> Principal
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className="remove"
+                            onClick={() => removerImagem(url)}
+                          >
+                            <Trash2 size={15} /> Remover
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="products-admin-image-empty">
+                    <ImagePlus size={31} />
+                    <span>Nenhuma imagem selecionada.</span>
+                  </div>
+                )}
+
+                <details className="products-admin-url-details">
+                  <summary>Adicionar imagem por URL</summary>
+
+                  <label>
+                    <span>URL da imagem principal</span>
+                    <input
+                      type="url"
+                      value={form.imagem}
+                      placeholder="https://..."
+                      onChange={(event) => {
+                        const url = event.target.value;
+
+                        setForm((atual) => ({
+                          ...atual,
+                          imagem: url,
+                          imagensTexto: [
+                            url,
+                            ...obterImagensFormulario().filter(
+                              (imagem) => imagem !== url,
+                            ),
+                          ]
+                            .filter(Boolean)
+                            .join("\n"),
+                        }));
+                      }}
+                    />
+                  </label>
+
+                  <label>
+                    <span>Outras URLs — uma por linha</span>
+                    <textarea
+                      value={form.imagensTexto}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          imagensTexto: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                </details>
+              </section>
               <label><span>Peso (kg)</span><input required type="number" min="0.001" step="0.001" value={form.peso} onChange={(e) => setForm({...form,peso:e.target.value})}/></label>
               <label><span>Altura (cm)</span><input required type="number" min="1" step="0.1" value={form.altura} onChange={(e) => setForm({...form,altura:e.target.value})}/></label>
               <label><span>Largura (cm)</span><input required type="number" min="1" step="0.1" value={form.largura} onChange={(e) => setForm({...form,largura:e.target.value})}/></label>
@@ -188,7 +522,7 @@ export default function AdminProducts() {
               <label className="check"><input type="checkbox" checked={form.destaque} onChange={(e) => setForm({...form,destaque:e.target.checked})}/> Destaque</label>
               <label className="check"><input type="checkbox" checked={form.ativo} onChange={(e) => setForm({...form,ativo:e.target.checked})}/> Produto ativo</label>
             </div>
-            <button className="products-admin-save" disabled={salvando}><Save size={18}/> {salvando ? "Salvando..." : "Salvar produto"}</button>
+            <button className="products-admin-save" disabled={salvando || enviandoImagens || !form.imagem}><Save size={18}/> {salvando ? "Salvando..." : "Salvar produto"}</button>
           </form>
         </div>
       )}
