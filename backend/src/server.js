@@ -11,14 +11,20 @@ import authRoutes from "./routes/authRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
+
+/*
+ * Mantenha estes imports somente
+ * se os arquivos já existirem.
+ */
+import productRoutes from "./routes/productRoutes.js";
 import shippingRoutes from "./routes/shippingRoutes.js";
 
 const app = express();
 
 const PORT =
-  process.env.PORT || 3001;
+  process.env.PORT ||
+  3001;
 
 const origensPermitidas = [
   "http://localhost:5173",
@@ -28,14 +34,21 @@ const origensPermitidas = [
 
 app.use(
   cors({
-    origin(origin, callback) {
+    origin(
+      origin,
+      callback,
+    ) {
       if (
         !origin ||
         origensPermitidas.includes(
           origin,
         )
       ) {
-        callback(null, true);
+        callback(
+          null,
+          true,
+        );
+
         return;
       }
 
@@ -67,26 +80,43 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(
+  express.json(),
+);
 
-app.use((req, res, next) => {
-  console.log(
-    `[REQUISIÇÃO] ${req.method} ${req.originalUrl}`,
-  );
+app.use(
+  (
+    req,
+    res,
+    next,
+  ) => {
+    console.log(
+      `[REQUISIÇÃO] ${req.method} ${req.originalUrl}`,
+    );
 
-  next();
-});
+    next();
+  },
+);
 
-app.get("/", (req, res) => {
-  return res.json({
-    mensagem:
-      "API PatchWork funcionando.",
-  });
-});
+app.get(
+  "/",
+  (
+    req,
+    res,
+  ) => {
+    return res.json({
+      mensagem:
+        "API Sonia Ferraz funcionando.",
+    });
+  },
+);
 
 app.get(
   "/teste-banco",
-  async (req, res) => {
+  async (
+    req,
+    res,
+  ) => {
     try {
       const result =
         await pool.query(
@@ -95,8 +125,10 @@ app.get(
 
       return res.json({
         ok: true,
+
         horario:
-          result.rows[0].now,
+          result.rows[0]
+            .now,
       });
     } catch (error) {
       console.error(
@@ -104,42 +136,91 @@ app.get(
         error,
       );
 
-      return res.status(500).json({
-        ok: false,
-        erro:
-          error instanceof Error
-            ? error.message
-            : "Erro desconhecido.",
-      });
+      return res
+        .status(500)
+        .json({
+          ok: false,
+
+          erro:
+            error instanceof
+            Error
+              ? error.message
+              : "Erro desconhecido.",
+        });
     }
   },
 );
 
 /*
- * Rotas totalmente públicas.
+ * Webhook deve ficar antes
+ * das rotas autenticadas.
  */
-app.use(webhookRoutes);
-app.use(authRoutes);
-app.use(productRoutes);
+app.use(
+  webhookRoutes,
+);
 
-/*
- * Rotas que podem usar autenticação.
- */
-app.use(profileRoutes);
-app.use(paymentRoutes);
-app.use(orderRoutes);
-app.use(shippingRoutes);
+app.use(
+  authRoutes,
+);
 
-/*
- * Rotas administrativas por último.
- */
-app.use(adminRoutes);
+app.use(
+  productRoutes,
+);
 
-app.use((req, res) => {
-  return res.status(404).json({
-    erro: "Rota não encontrada.",
-  });
-});
+app.use(
+  profileRoutes,
+);
+
+app.use(
+  shippingRoutes,
+);
+
+app.use(
+  paymentRoutes,
+);
+
+app.use(
+  orderRoutes,
+);
+
+app.use(
+  adminRoutes,
+);
+
+app.use(
+  (
+    req,
+    res,
+  ) => {
+    return res
+      .status(404)
+      .json({
+        erro:
+          "Rota não encontrada.",
+      });
+  },
+);
+
+app.use(
+  (
+    error,
+    req,
+    res,
+    next,
+  ) => {
+    console.error(
+      "Erro não tratado:",
+      error,
+    );
+
+    return res
+      .status(500)
+      .json({
+        erro:
+          "Erro interno do servidor.",
+      });
+  },
+);
 
 app.listen(
   PORT,

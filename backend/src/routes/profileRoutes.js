@@ -1,10 +1,6 @@
-import { Router } from "express";
-
 import {
-  alterarSenha,
-  atualizarPerfil,
-  buscarPerfil,
-} from "../controllers/profileController.js";
+  Router,
+} from "express";
 
 import {
   atualizarEndereco,
@@ -13,22 +9,66 @@ import {
   listarEnderecos,
 } from "../controllers/addressController.js";
 
-import { autenticarUsuario } from "../middlewares/authMiddleware.js";
+import {
+  buscarPerfil,
+  atualizarPerfil,
+  alterarSenha,
+} from "../controllers/profileController.js";
 
-const profileRoutes = Router();
+import {
+  autenticarUsuario,
+} from "../middlewares/authMiddleware.js";
+
+const profileRoutes =
+  Router();
+
+/*
+ * Todas as rotas abaixo precisam
+ * de um usuário autenticado.
+ */
+profileRoutes.use(
+  autenticarUsuario,
+);
+
+/*
+ * Perfil
+ */
 profileRoutes.get(
   "/perfil",
-  autenticarUsuario,
   buscarPerfil,
 );
 
-profileRoutes.get("/perfil", buscarPerfil);
-profileRoutes.patch("/perfil", atualizarPerfil);
-profileRoutes.patch("/perfil/senha", alterarSenha);
+profileRoutes.put(
+  "/perfil",
+  atualizarPerfil,
+);
 
-profileRoutes.get("/enderecos", listarEnderecos);
-profileRoutes.post("/enderecos", criarEndereco);
-profileRoutes.put("/enderecos/:id", atualizarEndereco);
-profileRoutes.delete("/enderecos/:id", excluirEndereco);
+profileRoutes.put(
+  "/perfil/senha",
+  alterarSenha,
+);
+
+/*
+ * Endereços
+ */
+profileRoutes.get(
+  "/enderecos",
+  listarEnderecos,
+);
+
+profileRoutes.post(
+  "/enderecos",
+  criarEndereco,
+);
+
+profileRoutes.put(
+  "/enderecos/:id",
+  atualizarEndereco,
+);
+
+profileRoutes.delete(
+  "/enderecos/:id",
+  excluirEndereco,
+);
 
 export default profileRoutes;
