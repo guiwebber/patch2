@@ -22,9 +22,7 @@ import type { Product } from "../../types/product";
 
 import "./home.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const heroSlides = [
   {
@@ -32,27 +30,23 @@ const heroSlides = [
       "https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=1400&q=85",
     label: "Feito à mão",
     title: "Peças exclusivas",
-    description:
-      "Produção artesanal e acabamento delicado.",
+    description: "Produção artesanal e acabamento delicado.",
   },
   {
     image:
       "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=85",
     label: "Detalhes que encantam",
     title: "Cuidado em cada ponto",
-    description:
-      "Tecidos escolhidos com carinho para transformar ambientes.",
+    description: "Tecidos escolhidos com carinho para transformar ambientes.",
   },
   {
     image:
       "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85",
     label: "Arte em tecidos",
     title: "Sua casa mais acolhedora",
-    description:
-      "Peças feitas sob encomenda para combinar com o seu estilo.",
+    description: "Peças feitas sob encomenda para combinar com o seu estilo.",
   },
 ];
-
 
 export default function Home() {
   const navigate = useNavigate();
@@ -67,31 +61,22 @@ export default function Home() {
     removeFromCart,
   } = useCart();
 
-  const {
-    selectedCategory,
-    setSelectedCategory,
-    toggleFavorite,
-    isFavorite,
-  } = useStore();
+  const { selectedCategory, setSelectedCategory, toggleFavorite, isFavorite } =
+    useStore();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [selectedProduct, setSelectedProduct] =
-    useState<Product | null>(null);
-  const [modalQuantity, setModalQuantity] =
-    useState(1);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalQuantity, setModalQuantity] = useState(1);
 
-  const [modalImageIndex, setModalImageIndex] =
-    useState(0);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
 
-  const [heroIndex, setHeroIndex] =
-    useState(0);
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  const [cartOpen, setCartOpen] =
-    useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -103,7 +88,9 @@ export default function Home() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.erro || "Não foi possível carregar os produtos.");
+          throw new Error(
+            data.erro || "Não foi possível carregar os produtos.",
+          );
         }
 
         if (ativo) {
@@ -113,7 +100,9 @@ export default function Home() {
       } catch (error) {
         if (ativo) {
           setProductsError(
-            error instanceof Error ? error.message : "Erro ao carregar produtos.",
+            error instanceof Error
+              ? error.message
+              : "Erro ao carregar produtos.",
           );
         }
       } finally {
@@ -122,14 +111,14 @@ export default function Home() {
     }
 
     void carregarProdutos();
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setHeroIndex((current) =>
-        (current + 1) % heroSlides.length,
-      );
+      setHeroIndex((current) => (current + 1) % heroSlides.length);
     }, 5000);
 
     return () => {
@@ -138,8 +127,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow =
-      selectedProduct ? "hidden" : "";
+    document.body.style.overflow = selectedProduct ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
@@ -147,18 +135,19 @@ export default function Home() {
   }, [selectedProduct]);
 
   const filteredProducts = useMemo(() => {
+    const searchNormalized = search.trim().toLowerCase();
+
     return products.filter((product) => {
       const matchesCategory =
-        selectedCategory === "Todos" ||
-        product.category === selectedCategory;
+        selectedCategory === "Todos" || product.category === selectedCategory;
 
-      const matchesSearch = product.name
-        .toLowerCase()
-        .includes(search.trim().toLowerCase());
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchNormalized) ||
+        product.description.toLowerCase().includes(searchNormalized);
 
       return matchesCategory && matchesSearch;
     });
-  }, [search, selectedCategory]);
+  }, [products, search, selectedCategory]);
 
   function openProduct(product: Product) {
     setSelectedProduct(product);
@@ -175,42 +164,32 @@ export default function Home() {
   function changeHero(direction: "previous" | "next") {
     setHeroIndex((current) => {
       if (direction === "previous") {
-        return current === 0
-          ? heroSlides.length - 1
-          : current - 1;
+        return current === 0 ? heroSlides.length - 1 : current - 1;
       }
 
       return (current + 1) % heroSlides.length;
     });
   }
 
-  function changeModalImage(
-    direction: "previous" | "next",
-  ) {
+  function changeModalImage(direction: "previous" | "next") {
     if (!selectedProduct) {
       return;
     }
 
-    const images =
-      selectedProduct.images?.length
-        ? selectedProduct.images
-        : [selectedProduct.image];
+    const images = selectedProduct.images?.length
+      ? selectedProduct.images
+      : [selectedProduct.image];
 
     setModalImageIndex((current) => {
       if (direction === "previous") {
-        return current === 0
-          ? images.length - 1
-          : current - 1;
+        return current === 0 ? images.length - 1 : current - 1;
       }
 
       return (current + 1) % images.length;
     });
   }
 
-  function handleAddToCart(
-    product: Product,
-    quantity = 1,
-  ) {
+  function handleAddToCart(product: Product, quantity = 1) {
     addToCart(product, quantity);
     closeProduct();
     setCartOpen(true);
@@ -242,19 +221,13 @@ export default function Home() {
     <main className="home">
       <section className="hero">
         <div className="hero-content">
-          <span className="hero-tag">
-            Artesanato feito com carinho
-          </span>
+          <span className="hero-tag">Artesanato feito com carinho</span>
 
-          <h1>
-            Peças únicas para deixar sua casa ainda mais
-            bonita
-          </h1>
+          <h1>Peças únicas para deixar sua casa ainda mais bonita</h1>
 
           <p>
-            Conheça nossa coleção de produtos artesanais
-            em patchwork, feitos com cuidado em cada
-            detalhe.
+            Conheça nossa coleção de produtos artesanais em patchwork, feitos
+            com cuidado em cada detalhe.
           </p>
 
           <div className="made-to-order-notice">
@@ -262,8 +235,8 @@ export default function Home() {
             <div>
               <strong>Produtos feitos sob encomenda</strong>
               <span>
-                A produção começa após a confirmação do
-                pagamento. O prazo varia conforme cada peça.
+                A produção começa após a confirmação do pagamento. O prazo varia
+                conforme cada peça.
               </span>
             </div>
           </div>
@@ -281,9 +254,7 @@ export default function Home() {
               src={slide.image}
               alt={slide.title}
               className={
-                index === heroIndex
-                  ? "hero-slide active"
-                  : "hero-slide"
+                index === heroIndex ? "hero-slide active" : "hero-slide"
               }
             />
           ))}
@@ -319,11 +290,7 @@ export default function Home() {
               <button
                 type="button"
                 key={slide.image}
-                className={
-                  index === heroIndex
-                    ? "hero-dot active"
-                    : "hero-dot"
-                }
+                className={index === heroIndex ? "hero-dot active" : "hero-dot"}
                 onClick={() => setHeroIndex(index)}
                 aria-label={`Abrir imagem ${index + 1}`}
               />
@@ -335,50 +302,35 @@ export default function Home() {
       <section className="benefits">
         <article>
           <strong>Produção artesanal</strong>
-          <span>
-            Cada peça é feita com atenção aos detalhes.
-          </span>
+          <span>Cada peça é feita com atenção aos detalhes.</span>
         </article>
 
         <article>
           <strong>Envio para todo Brasil</strong>
-          <span>
-            Receba seus produtos com segurança.
-          </span>
+          <span>Receba seus produtos com segurança.</span>
         </article>
 
         <article>
           <strong>Compra segura</strong>
-          <span>
-            Atendimento durante todo o pedido.
-          </span>
+          <span>Atendimento durante todo o pedido.</span>
         </article>
       </section>
 
-      <section
-        className="products-section"
-        id="produtos"
-      >
+      <section className="products-section" id="produtos">
         <div className="section-header">
           <div>
-            <span className="section-label">
-              Nossa coleção
-            </span>
+            <span className="section-label">Nossa coleção</span>
 
             <h2>Produtos em destaque</h2>
 
-            <p>
-              Escolha a peça que combina com sua casa.
-            </p>
+            <p>Escolha a peça que combina com sua casa.</p>
           </div>
 
           {selectedCategory !== "Todos" && (
             <button
               type="button"
               className="clear-category-button"
-              onClick={() =>
-                setSelectedCategory("Todos")
-              }
+              onClick={() => setSelectedCategory("Todos")}
             >
               Limpar filtro
             </button>
@@ -393,9 +345,7 @@ export default function Home() {
               type="text"
               placeholder="Buscar produtos..."
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -409,9 +359,7 @@ export default function Home() {
                     ? "category-button active"
                     : "category-button"
                 }
-                onClick={() =>
-                  setSelectedCategory(category)
-                }
+                onClick={() => setSelectedCategory(category)}
               >
                 {category}
               </button>
@@ -420,19 +368,21 @@ export default function Home() {
         </div>
 
         {productsLoading ? (
-          <div className="no-products"><h3>Carregando produtos...</h3></div>
+          <div className="no-products">
+            <h3>Carregando produtos...</h3>
+          </div>
         ) : productsError ? (
-          <div className="no-products"><h3>Não foi possível carregar</h3><p>{productsError}</p></div>
+          <div className="no-products">
+            <h3>Não foi possível carregar</h3>
+            <p>{productsError}</p>
+          </div>
         ) : filteredProducts.length === 0 ? (
           <div className="no-products">
             <Search size={42} />
 
             <h3>Nenhum produto encontrado</h3>
 
-            <p>
-              Tente buscar outro nome ou selecionar outra
-              categoria.
-            </p>
+            <p>Tente buscar outro nome ou selecionar outra categoria.</p>
           </div>
         ) : (
           <div className="products-grid">
@@ -447,10 +397,7 @@ export default function Home() {
                   tabIndex={0}
                   onClick={() => openProduct(product)}
                   onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" ||
-                      event.key === " "
-                    ) {
+                    if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       openProduct(product);
                     }
@@ -464,23 +411,17 @@ export default function Home() {
                     />
 
                     {product.featured && (
-                      <span className="featured-badge">
-                        Destaque
-                      </span>
+                      <span className="featured-badge">Destaque</span>
                     )}
 
                     {product.oldPrice && (
-                      <span className="discount-badge">
-                        Oferta
-                      </span>
+                      <span className="discount-badge">Oferta</span>
                     )}
 
                     <button
                       type="button"
                       className={
-                        favorite
-                          ? "favorite-button active"
-                          : "favorite-button"
+                        favorite ? "favorite-button active" : "favorite-button"
                       }
                       aria-label={
                         favorite
@@ -499,19 +440,13 @@ export default function Home() {
                     >
                       <Heart
                         size={20}
-                        fill={
-                          favorite
-                            ? "currentColor"
-                            : "none"
-                        }
+                        fill={favorite ? "currentColor" : "none"}
                       />
                     </button>
                   </div>
 
                   <div className="product-content">
-                    <span className="product-category">
-                      {product.category}
-                    </span>
+                    <span className="product-category">{product.category}</span>
 
                     <h3>{product.name}</h3>
 
@@ -525,14 +460,10 @@ export default function Home() {
 
                     <div className="product-price">
                       {product.oldPrice && (
-                        <span>
-                          {formatPrice(product.oldPrice)}
-                        </span>
+                        <span>{formatPrice(product.oldPrice)}</span>
                       )}
 
-                      <strong>
-                        {formatPrice(product.price)}
-                      </strong>
+                      <strong>{formatPrice(product.price)}</strong>
                     </div>
 
                     <div className="product-actions">
@@ -564,22 +495,15 @@ export default function Home() {
           aria-label="Abrir carrinho"
         >
           <ShoppingCart size={27} />
-          <span className="floating-cart-count">
-            {cartQuantity}
-          </span>
+          <span className="floating-cart-count">{cartQuantity}</span>
         </button>
       )}
 
       {selectedProduct && (
-        <div
-          className="modal-overlay"
-          onMouseDown={closeProduct}
-        >
+        <div className="modal-overlay" onMouseDown={closeProduct}>
           <div
             className="product-modal"
-            onMouseDown={(event) =>
-              event.stopPropagation()
-            }
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <button
               type="button"
@@ -595,24 +519,18 @@ export default function Home() {
                 <img
                   key={modalImageIndex}
                   src={
-                    selectedProduct.images?.[
-                      modalImageIndex
-                    ] || selectedProduct.image
+                    selectedProduct.images?.[modalImageIndex] ||
+                    selectedProduct.image
                   }
-                  alt={`${selectedProduct.name} - foto ${
-                    modalImageIndex + 1
-                  }`}
+                  alt={`${selectedProduct.name} - foto ${modalImageIndex + 1}`}
                 />
 
-                {(selectedProduct.images?.length || 1) >
-                  1 && (
+                {(selectedProduct.images?.length || 1) > 1 && (
                   <>
                     <button
                       type="button"
                       className="gallery-arrow gallery-arrow-left"
-                      onClick={() =>
-                        changeModalImage("previous")
-                      }
+                      onClick={() => changeModalImage("previous")}
                       aria-label="Foto anterior"
                     >
                       <ChevronLeft size={24} />
@@ -621,27 +539,23 @@ export default function Home() {
                     <button
                       type="button"
                       className="gallery-arrow gallery-arrow-right"
-                      onClick={() =>
-                        changeModalImage("next")
-                      }
+                      onClick={() => changeModalImage("next")}
                       aria-label="Próxima foto"
                     >
                       <ChevronRight size={24} />
                     </button>
 
                     <span className="gallery-counter">
-                      {modalImageIndex + 1}/
-                      {selectedProduct.images?.length}
+                      {modalImageIndex + 1}/{selectedProduct.images?.length}
                     </span>
                   </>
                 )}
               </div>
 
               <div className="modal-thumbnails">
-                {(
-                  selectedProduct.images?.length
-                    ? selectedProduct.images
-                    : [selectedProduct.image]
+                {(selectedProduct.images?.length
+                  ? selectedProduct.images
+                  : [selectedProduct.image]
                 ).map((image, index) => (
                   <button
                     type="button"
@@ -651,17 +565,10 @@ export default function Home() {
                         ? "modal-thumbnail active"
                         : "modal-thumbnail"
                     }
-                    onClick={() =>
-                      setModalImageIndex(index)
-                    }
-                    aria-label={`Selecionar foto ${
-                      index + 1
-                    }`}
+                    onClick={() => setModalImageIndex(index)}
+                    aria-label={`Selecionar foto ${index + 1}`}
                   >
-                    <img
-                      src={image}
-                      alt=""
-                    />
+                    <img src={image} alt="" />
                   </button>
                 ))}
               </div>
@@ -682,17 +589,13 @@ export default function Home() {
                       ? "modal-favorite-button active"
                       : "modal-favorite-button"
                   }
-                  onClick={() =>
-                    toggleFavorite(selectedProduct)
-                  }
+                  onClick={() => toggleFavorite(selectedProduct)}
                   aria-label="Alternar favorito"
                 >
                   <Heart
                     size={22}
                     fill={
-                      isFavorite(selectedProduct.id)
-                        ? "currentColor"
-                        : "none"
+                      isFavorite(selectedProduct.id) ? "currentColor" : "none"
                     }
                   />
                 </button>
@@ -705,26 +608,19 @@ export default function Home() {
                 <div>
                   <strong>Produção sob encomenda</strong>
                   <span>
-                    Prazo estimado de{" "}
-                    {selectedProduct.producaoMinDias} a{" "}
-                    {selectedProduct.producaoMaxDias} dias
-                    úteis após a confirmação do pagamento.
+                    Prazo estimado de {selectedProduct.producaoMinDias} a{" "}
+                    {selectedProduct.producaoMaxDias} dias úteis após a
+                    confirmação do pagamento.
                   </span>
                 </div>
               </div>
 
               <div className="modal-price">
                 {selectedProduct.oldPrice && (
-                  <span>
-                    {formatPrice(
-                      selectedProduct.oldPrice,
-                    )}
-                  </span>
+                  <span>{formatPrice(selectedProduct.oldPrice)}</span>
                 )}
 
-                <strong>
-                  {formatPrice(selectedProduct.price)}
-                </strong>
+                <strong>{formatPrice(selectedProduct.price)}</strong>
               </div>
 
               <div className="quantity-area">
@@ -734,9 +630,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() =>
-                      setModalQuantity((quantity) =>
-                        Math.max(1, quantity - 1),
-                      )
+                      setModalQuantity((quantity) => Math.max(1, quantity - 1))
                     }
                   >
                     <Minus size={18} />
@@ -746,11 +640,7 @@ export default function Home() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setModalQuantity(
-                        (quantity) => quantity + 1,
-                      )
-                    }
+                    onClick={() => setModalQuantity((quantity) => quantity + 1)}
                   >
                     <Plus size={18} />
                   </button>
@@ -760,22 +650,14 @@ export default function Home() {
               <button
                 type="button"
                 className="modal-cart-button"
-                onClick={() =>
-                  handleAddToCart(
-                    selectedProduct,
-                    modalQuantity,
-                  )
-                }
+                onClick={() => handleAddToCart(selectedProduct, modalQuantity)}
               >
                 <ShoppingCart size={21} />
 
                 <span>Adicionar ao carrinho</span>
 
                 <strong>
-                  {formatPrice(
-                    selectedProduct.price *
-                      modalQuantity,
-                  )}
+                  {formatPrice(selectedProduct.price * modalQuantity)}
                 </strong>
               </button>
             </div>
@@ -785,10 +667,7 @@ export default function Home() {
 
       {cartOpen && (
         <>
-          <div
-            className="cart-overlay"
-            onClick={() => setCartOpen(false)}
-          />
+          <div className="cart-overlay" onClick={() => setCartOpen(false)} />
 
           <aside className="cart-drawer">
             <div className="cart-header">
@@ -797,9 +676,7 @@ export default function Home() {
 
                 <p>
                   {cartQuantity}{" "}
-                  {cartQuantity === 1
-                    ? "item adicionado"
-                    : "itens adicionados"}
+                  {cartQuantity === 1 ? "item adicionado" : "itens adicionados"}
                 </p>
               </div>
 
@@ -818,15 +695,9 @@ export default function Home() {
 
                 <h3>Seu carrinho está vazio</h3>
 
-                <p>
-                  Adicione produtos para começar sua
-                  compra.
-                </p>
+                <p>Adicione produtos para começar sua compra.</p>
 
-                <button
-                  type="button"
-                  onClick={() => setCartOpen(false)}
-                >
+                <button type="button" onClick={() => setCartOpen(false)}>
                   Ver produtos
                 </button>
               </div>
@@ -834,29 +705,18 @@ export default function Home() {
               <>
                 <div className="cart-items">
                   {cart.map((item) => (
-                    <article
-                      className="cart-item"
-                      key={item.product.id}
-                    >
-                      <img
-                        src={item.product.image}
-                        alt={item.product.name}
-                      />
+                    <article className="cart-item" key={item.product.id}>
+                      <img src={item.product.image} alt={item.product.name} />
 
                       <div className="cart-item-content">
                         <div className="cart-item-header">
                           <div>
-                            <span>
-                              {item.product.category}
-                            </span>
+                            <span>{item.product.category}</span>
 
-                            <h3>
-                              {item.product.name}
-                            </h3>
+                            <h3>{item.product.name}</h3>
 
                             <small className="cart-production-time">
-                              Produção:{" "}
-                              {item.product.producaoMinDias} a{" "}
+                              Produção: {item.product.producaoMinDias} a{" "}
                               {item.product.producaoMaxDias} dias úteis
                             </small>
                           </div>
@@ -864,11 +724,7 @@ export default function Home() {
                           <button
                             type="button"
                             className="remove-button"
-                            onClick={() =>
-                              removeFromCart(
-                                item.product.id,
-                              )
-                            }
+                            onClick={() => removeFromCart(item.product.id)}
                             aria-label={`Remover ${item.product.name}`}
                           >
                             <Trash2 size={19} />
@@ -880,24 +736,18 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() =>
-                                decreaseCartQuantity(
-                                  item.product.id,
-                                )
+                                decreaseCartQuantity(item.product.id)
                               }
                             >
                               <Minus size={16} />
                             </button>
 
-                            <strong>
-                              {item.quantity}
-                            </strong>
+                            <strong>{item.quantity}</strong>
 
                             <button
                               type="button"
                               onClick={() =>
-                                increaseCartQuantity(
-                                  item.product.id,
-                                )
+                                increaseCartQuantity(item.product.id)
                               }
                             >
                               <Plus size={16} />
@@ -905,10 +755,7 @@ export default function Home() {
                           </div>
 
                           <strong className="cart-item-price">
-                            {formatPrice(
-                              item.product.price *
-                                item.quantity,
-                            )}
+                            {formatPrice(item.product.price * item.quantity)}
                           </strong>
                         </div>
                       </div>
@@ -920,15 +767,10 @@ export default function Home() {
                   <div className="cart-subtotal">
                     <span>Subtotal</span>
 
-                    <strong>
-                      {formatPrice(cartTotal)}
-                    </strong>
+                    <strong>{formatPrice(cartTotal)}</strong>
                   </div>
 
-                  <p>
-                    Frete e descontos serão calculados na
-                    finalização.
-                  </p>
+                  <p>Frete e descontos serão calculados na finalização.</p>
 
                   <button
                     type="button"
