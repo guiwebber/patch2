@@ -8,16 +8,12 @@ import {
   User,
   X,
 } from "lucide-react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/logo.png";
 import { categories } from "../../../data/products";
 import { useAuth } from "../../context/AuthContext";
 import { useStore } from "../../context/StoreContext";
-
+import { avatarPadrao } from "../../utils/defaultAvatars";
 import "./menu.css";
 
 export default function MenuBar() {
@@ -36,8 +32,7 @@ export default function MenuBar() {
   } = useStore();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] =
-    useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   function closeMenus() {
     setMobileOpen(false);
@@ -110,21 +105,15 @@ export default function MenuBar() {
     scrollToSection("produtos");
   }
 
-  const firstName =
-    usuario?.nome?.trim().split(" ")[0] || "Cliente";
+  const firstName = usuario?.nome?.trim().split(" ")[0] || "Cliente";
 
-  const userInitial =
-    usuario?.nome?.trim().charAt(0).toUpperCase() || "U";
+  const userInitial = usuario?.nome?.trim().charAt(0).toUpperCase() || "U";
 
   return (
     <>
       <header className="site-header">
         <div className="menu-container">
-          <button
-            type="button"
-            className="menu-logo"
-            onClick={goHome}
-          >
+          <button type="button" className="menu-logo" onClick={goHome}>
             <img className="menu-logo-img" src={Logo} alt="PatchWork" />
           </button>
 
@@ -142,11 +131,7 @@ export default function MenuBar() {
                 <button
                   type="button"
                   className="categories-trigger"
-                  onClick={() =>
-                    setCategoriesOpen(
-                      (current) => !current,
-                    )
-                  }
+                  onClick={() => setCategoriesOpen((current) => !current)}
                 >
                   Categorias
                   <ChevronDown
@@ -166,13 +151,9 @@ export default function MenuBar() {
                         key={category}
                         type="button"
                         className={
-                          selectedCategory === category
-                            ? "active"
-                            : ""
+                          selectedCategory === category ? "active" : ""
                         }
-                        onClick={() =>
-                          chooseCategory(category)
-                        }
+                        onClick={() => chooseCategory(category)}
                       >
                         {category}
                       </button>
@@ -203,9 +184,7 @@ export default function MenuBar() {
                 <Heart size={23} />
 
                 {favorites.length > 0 && (
-                  <span className="favorites-count">
-                    {favorites.length}
-                  </span>
+                  <span className="favorites-count">{favorites.length}</span>
                 )}
               </button>
 
@@ -214,27 +193,18 @@ export default function MenuBar() {
                   <button
                     type="button"
                     className="logged-user-profile"
-                    onClick={() =>
-                      navigate("/minha-conta")
-                    }
+                    onClick={() => navigate("/minha-conta")}
                     title="Abrir minha conta"
                   >
-                    {usuario.foto ? (
-                      <img
-                        src={usuario.foto}
-                        alt={usuario.nome}
-                        className="logged-user-photo"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span className="logged-user-avatar">
-                        {userInitial}
-                      </span>
-                    )}
-
-                    <span className="logged-user-name">
-                      {firstName}
-                    </span>
+                    <img
+                      src={
+                        usuario.foto || avatarPadrao(usuario.id, usuario.email)
+                      }
+                      alt={usuario.nome}
+                      className="logged-user-photo"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="logged-user-name">{firstName}</span>
                   </button>
 
                   <button
@@ -260,15 +230,9 @@ export default function MenuBar() {
           <button
             type="button"
             className="mobile-menu-button"
-            onClick={() =>
-              setMobileOpen((current) => !current)
-            }
+            onClick={() => setMobileOpen((current) => !current)}
           >
-            {mobileOpen ? (
-              <X size={29} />
-            ) : (
-              <Menu size={29} />
-            )}
+            {mobileOpen ? <X size={29} /> : <Menu size={29} />}
           </button>
         </div>
 
@@ -298,11 +262,7 @@ export default function MenuBar() {
             <button
               type="button"
               className="mobile-categories-trigger"
-              onClick={() =>
-                setCategoriesOpen(
-                  (current) => !current,
-                )
-              }
+              onClick={() => setCategoriesOpen((current) => !current)}
             >
               Categorias
               <ChevronDown size={17} />
@@ -314,9 +274,7 @@ export default function MenuBar() {
                   <button
                     key={category}
                     type="button"
-                    onClick={() =>
-                      chooseCategory(category)
-                    }
+                    onClick={() => chooseCategory(category)}
                   >
                     {category}
                   </button>
@@ -344,10 +302,7 @@ export default function MenuBar() {
             </button>
 
             {!estaLogado ? (
-              <button
-                type="button"
-                onClick={() => navigate("/login")}
-              >
+              <button type="button" onClick={() => navigate("/login")}>
                 <User size={19} />
                 Entrar
               </button>
@@ -380,9 +335,7 @@ export default function MenuBar() {
                 <h2>Favoritos</h2>
                 <p>
                   {favorites.length}{" "}
-                  {favorites.length === 1
-                    ? "produto salvo"
-                    : "produtos salvos"}
+                  {favorites.length === 1 ? "produto salvo" : "produtos salvos"}
                 </p>
               </div>
 
@@ -399,23 +352,14 @@ export default function MenuBar() {
               <div className="empty-favorites">
                 <Heart size={58} />
                 <h3>Nenhum favorito ainda</h3>
-                <p>
-                  Toque no coração de um produto para
-                  guardá-lo aqui.
-                </p>
+                <p>Toque no coração de um produto para guardá-lo aqui.</p>
               </div>
             ) : (
               <>
                 <div className="favorites-list">
                   {favorites.map((product) => (
-                    <article
-                      className="favorite-item"
-                      key={product.id}
-                    >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                      />
+                    <article className="favorite-item" key={product.id}>
+                      <img src={product.image} alt={product.name} />
 
                       <div className="favorite-item-content">
                         <span>{product.category}</span>
@@ -424,11 +368,7 @@ export default function MenuBar() {
                         <button
                           type="button"
                           className="view-favorite-button"
-                          onClick={() =>
-                            viewFavoriteProduct(
-                              product.category,
-                            )
-                          }
+                          onClick={() => viewFavoriteProduct(product.category)}
                         >
                           Ver produto
                         </button>
@@ -437,9 +377,7 @@ export default function MenuBar() {
                       <button
                         type="button"
                         className="remove-favorite-button"
-                        onClick={() =>
-                          removeFavorite(product.id)
-                        }
+                        onClick={() => removeFavorite(product.id)}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -448,10 +386,7 @@ export default function MenuBar() {
                 </div>
 
                 <div className="favorites-footer">
-                  <button
-                    type="button"
-                    onClick={clearFavorites}
-                  >
+                  <button type="button" onClick={clearFavorites}>
                     Limpar favoritos
                   </button>
                 </div>

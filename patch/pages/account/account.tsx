@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import { avatarPadrao } from "../../src/utils/defaultAvatars";
 import { useAuth, type Usuario } from "../../src/context/AuthContext";
 import {
   ESTADOS_BRASIL,
@@ -420,15 +420,11 @@ export default function Account() {
       <section className="account-shell">
         <aside className="account-sidebar">
           <div className="account-user-card">
-            {usuario.foto ? (
-              <img
-                src={usuario.foto}
-                alt={usuario.nome}
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span>{usuario.nome.charAt(0).toUpperCase()}</span>
-            )}
+            <img
+              src={usuario.foto || avatarPadrao(usuario.id, usuario.email)}
+              alt={usuario.nome}
+              referrerPolicy="no-referrer"
+            />
 
             <div>
               <strong>{usuario.nome}</strong>
