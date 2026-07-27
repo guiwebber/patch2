@@ -121,12 +121,21 @@ app.use(webhookRoutes);
 
 app.use(authRoutes);
 app.use(profileRoutes);
+
+/*
+ * Produtos públicos precisam ficar antes
+ * das rotas protegidas do administrador.
+ */
 app.use(productRoutes);
+
 app.use(paymentRoutes);
 app.use(orderRoutes);
-app.use(adminRoutes);
-
 app.use(shippingRoutes);
+
+/*
+ * Rotas administrativas por último.
+ */
+app.use(adminRoutes);
 app.use((req, res) => {
   return res.status(404).json({
     erro:
