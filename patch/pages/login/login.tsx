@@ -1,21 +1,29 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
 } from "lucide-react";
+
 import {
   GoogleLogin,
   type CredentialResponse,
 } from "@react-oauth/google";
+
 import {
   Link,
   useLocation,
   useNavigate,
 } from "react-router-dom";
 
-import { useAuth } from "../../src/context/AuthContext";
+import {
+  useAuth,
+} from "../../src/context/AuthContext";
 
 import "./login.css";
 
@@ -30,7 +38,12 @@ type LoginLocationState = {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { entrar } = useAuth();
+
+  const {
+    entrar,
+    estaLogado,
+    carregandoAutenticacao,
+  } = useAuth();
 
   const locationState =
     location.state as LoginLocationState | null;
@@ -40,15 +53,41 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [mostrarSenha, setMostrarSenha] =
-    useState(false);
+
+  const [
+    mostrarSenha,
+    setMostrarSenha,
+  ] = useState(false);
+
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] =
-    useState(false);
+
+  const [
+    carregando,
+    setCarregando,
+  ] = useState(false);
+
   const [
     carregandoGoogle,
     setCarregandoGoogle,
   ] = useState(false);
+
+  useEffect(() => {
+    if (
+      carregandoAutenticacao ||
+      !estaLogado
+    ) {
+      return;
+    }
+
+    navigate(redirectTo, {
+      replace: true,
+    });
+  }, [
+    carregandoAutenticacao,
+    estaLogado,
+    navigate,
+    redirectTo,
+  ]);
 
   function concluirLogin(
     cliente: Parameters<
@@ -64,51 +103,76 @@ export default function Login() {
   }
 
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
+    event:
+      React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
     setErro("");
 
-    if (!email.trim() || !senha.trim()) {
-      setErro("Preencha o e-mail e a senha.");
+    if (
+      !email.trim() ||
+      !senha.trim()
+    ) {
+      setErro(
+        "Preencha o e-mail e a senha.",
+      );
+
       return;
     }
 
     try {
       setCarregando(true);
 
-      const response = await fetch(
-        `${API_URL}/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            senha,
-          }),
-        },
-      );
+      const response =
+        await fetch(
+          `${API_URL}/login`,
+          {
+            method: "POST",
 
-      const data = await response.json();
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                email:
+                  email
+                    .trim()
+                    .toLowerCase(),
+
+                senha,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         setErro(
           data.erro ||
             "Não foi possível entrar.",
         );
+
         return;
       }
 
-      if (!data.token || !data.cliente) {
+      if (
+        !data.token ||
+        !data.cliente
+      ) {
         setErro(
           "O servidor não retornou os dados do login.",
         );
+
         return;
       }
 
-      concluirLogin(data.cliente, data.token);
+      concluirLogin(
+        data.cliente,
+        data.token,
+      );
     } catch (error) {
       console.error(
         "Erro ao realizar login:",
@@ -124,7 +188,8 @@ export default function Login() {
   }
 
   async function handleGoogleLogin(
-    responseGoogle: CredentialResponse,
+    responseGoogle:
+      CredentialResponse,
   ) {
     const credential =
       responseGoogle.credential;
@@ -133,6 +198,7 @@ export default function Login() {
       setErro(
         "O Google não retornou uma credencial válida.",
       );
+
       return;
     }
 
@@ -140,37 +206,51 @@ export default function Login() {
       setErro("");
       setCarregandoGoogle(true);
 
-      const response = await fetch(
-        `${API_URL}/login/google`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            credential,
-          }),
-        },
-      );
+      const response =
+        await fetch(
+          `${API_URL}/login/google`,
+          {
+            method: "POST",
 
-      const data = await response.json();
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                credential,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         setErro(
           data.erro ||
             "Não foi possível entrar com o Google.",
         );
+
         return;
       }
 
-      if (!data.token || !data.cliente) {
+      if (
+        !data.token ||
+        !data.cliente
+      ) {
         setErro(
           "O servidor não retornou os dados do login.",
         );
+
         return;
       }
 
-      concluirLogin(data.cliente, data.token);
+      concluirLogin(
+        data.cliente,
+        data.token,
+      );
     } catch (error) {
       console.error(
         "Erro no login Google:",
@@ -186,7 +266,21 @@ export default function Login() {
   }
 
   const bloqueado =
-    carregando || carregandoGoogle;
+    carregando ||
+    carregandoGoogle;
+
+  if (
+    carregandoAutenticacao ||
+    estaLogado
+  ) {
+    return (
+      <main className="auth-page">
+        <div className="google-loading">
+          Carregando...
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="auth-page">
@@ -196,11 +290,14 @@ export default function Login() {
             PatchWork
           </span>
 
-          <h1>Bem-vindo de volta</h1>
+          <h1>
+            Bem-vindo de volta
+          </h1>
 
           <p>
-            Entre na sua conta para acompanhar seus
-            pedidos e continuar suas compras.
+            Entre na sua conta para
+            acompanhar seus pedidos e
+            continuar suas compras.
           </p>
         </div>
 
@@ -212,13 +309,16 @@ export default function Login() {
             <h2>Entrar</h2>
 
             <p>
-              Digite seus dados para acessar sua conta.
+              Digite seus dados para
+              acessar sua conta.
             </p>
           </div>
 
-          {redirectTo === "/checkout" && (
+          {redirectTo ===
+            "/checkout" && (
             <div className="auth-info">
-              Entre para continuar sua compra.
+              Entre para continuar sua
+              compra.
             </div>
           )}
 
@@ -239,7 +339,9 @@ export default function Login() {
                 placeholder="seuemail@exemplo.com"
                 value={email}
                 onChange={(event) =>
-                  setEmail(event.target.value)
+                  setEmail(
+                    event.target.value,
+                  )
                 }
                 autoComplete="email"
                 disabled={bloqueado}
@@ -251,7 +353,9 @@ export default function Login() {
             <span>Senha</span>
 
             <div className="auth-input-wrapper">
-              <LockKeyhole size={20} />
+              <LockKeyhole
+                size={20}
+              />
 
               <input
                 type={
@@ -262,7 +366,9 @@ export default function Login() {
                 placeholder="Digite sua senha"
                 value={senha}
                 onChange={(event) =>
-                  setSenha(event.target.value)
+                  setSenha(
+                    event.target.value,
+                  )
                 }
                 autoComplete="current-password"
                 disabled={bloqueado}
@@ -273,7 +379,8 @@ export default function Login() {
                 className="auth-password-button"
                 onClick={() =>
                   setMostrarSenha(
-                    (valor) => !valor,
+                    (valor) =>
+                      !valor,
                   )
                 }
                 aria-label={
@@ -284,9 +391,13 @@ export default function Login() {
                 disabled={bloqueado}
               >
                 {mostrarSenha ? (
-                  <EyeOff size={20} />
+                  <EyeOff
+                    size={20}
+                  />
                 ) : (
-                  <Eye size={20} />
+                  <Eye
+                    size={20}
+                  />
                 )}
               </button>
             </div>
@@ -298,7 +409,10 @@ export default function Login() {
                 type="checkbox"
                 disabled={bloqueado}
               />
-              <span>Lembrar de mim</span>
+
+              <span>
+                Lembrar de mim
+              </span>
             </label>
 
             <button
@@ -331,7 +445,9 @@ export default function Login() {
               </p>
             ) : (
               <GoogleLogin
-                onSuccess={handleGoogleLogin}
+                onSuccess={
+                  handleGoogleLogin
+                }
                 onError={() =>
                   setErro(
                     "O login com o Google falhou.",
@@ -348,6 +464,7 @@ export default function Login() {
 
           <p className="auth-footer">
             Ainda não tem uma conta?{" "}
+
             <Link
               to="/signup"
               state={{
