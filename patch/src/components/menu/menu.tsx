@@ -89,6 +89,7 @@ export default function MenuBar() {
   }
 
   function handleLogout() {
+    clearFavorites();
     sair();
     closeMenus();
     navigate("/");

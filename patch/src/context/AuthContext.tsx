@@ -76,14 +76,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   function sair() {
-    localStorage.removeItem("usuario");
+  localStorage.removeItem("usuario");
+  localStorage.removeItem("token");
+  localStorage.removeItem("favoritos");
 
-    localStorage.removeItem("token");
+  setUsuario(null);
+  setToken(null);
 
-    setUsuario(null);
-    setToken(null);
-  }
-
+  window.dispatchEvent(
+    new Event("favoritos-limpos"),
+  );
+}
   const estaLogado = Boolean(usuario && token);
 
   const ehAdministrador = Boolean(usuario?.administrador);
