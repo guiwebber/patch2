@@ -1,66 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Montserrat:wght@400;500;600;700&display=swap");
+
 .account-page {
   min-height: 100vh;
-  padding: 70px 5%;
+  padding: 72px 5%;
   color: #382c25;
-  background: #fffaf5;
+  background:
+    radial-gradient(circle at top right, rgba(127, 29, 51, 0.05), transparent 28%),
+    #fffaf5;
+  font-family: "Montserrat", sans-serif;
 }
 
 .account-loading {
   min-height: 70vh;
   display: grid;
   place-items: center;
+  color: #6e5d54;
   background: #fffaf5;
-  font-size: 18px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .account-shell {
   width: min(1200px, 100%);
   margin: auto;
   display: grid;
-  grid-template-columns: 270px 1fr;
-  gap: 28px;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 34px;
 }
 
 .account-sidebar {
   height: fit-content;
-  padding: 18px;
+  padding: 22px;
   position: sticky;
   top: 115px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: #fff;
-  border: 1px solid #eadfd4;
-  border-radius: 18px;
-  box-shadow: 0 16px 42px rgba(67, 43, 28, 0.08);
+  gap: 9px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #ead9cc;
+  border-radius: 26px;
+  box-shadow: 0 20px 50px rgba(87, 47, 35, 0.09);
+  backdrop-filter: blur(10px);
 }
 
 .account-user-card {
-  padding: 8px 6px 20px;
+  padding: 8px 6px 22px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid #eee3d8;
+  gap: 13px;
+  border-bottom: 1px solid #eee0d4;
 }
 
 .account-user-card img,
 .account-user-card > span {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
   border-radius: 50%;
 }
 
 .account-user-card img {
   object-fit: cover;
+  border: 3px solid #f2dfd1;
+  box-shadow: 0 8px 18px rgba(95, 52, 38, 0.12);
 }
 
 .account-user-card > span {
   display: grid;
   place-items: center;
   color: #fff;
-  background: #d97706;
-  font-size: 20px;
-  font-weight: 800;
+  background: #7f1d33;
+  font-size: 21px;
+  font-weight: 700;
 }
 
 .account-user-card div {
@@ -70,35 +82,50 @@
 .account-user-card strong,
 .account-user-card small {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.account-user-card small {
-  margin-top: 4px;
-  color: #807066;
-}
-
-.account-sidebar > button {
-  min-height: 48px;
-  padding: 0 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #5b4b42;
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: left;
+.account-user-card strong {
+  color: #35272a;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: 22px;
   font-weight: 700;
 }
 
-.account-sidebar > button:hover,
+.account-user-card small {
+  margin-top: 3px;
+  color: #81716a;
+  font-size: 12px;
+}
+
+.account-sidebar > button {
+  min-height: 50px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #5d4f49;
+  background: transparent;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.15px;
+  transition: 0.22s ease;
+}
+
+.account-sidebar > button:hover {
+  color: #7f1d33;
+  background: #fbf1e8;
+  transform: translateX(4px);
+}
+
 .account-sidebar > button.active {
-  color: #b85f05;
-  background: #fff2e2;
+  color: #7f1d33;
+  background: #f8eadf;
+  box-shadow: inset 3px 0 0 #7f1d33;
 }
 
 .account-content {
@@ -106,21 +133,29 @@
 }
 
 .account-heading > span {
-  color: #b45f06;
-  font-size: 13px;
-  font-weight: 800;
+  color: #7f1d33;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
   text-transform: uppercase;
 }
 
 .account-heading h1 {
-  margin-top: 8px;
-  font-size: 38px;
+  margin-top: 6px;
+  color: #332426;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: clamp(42px, 4.2vw, 58px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.7px;
 }
 
 .account-alert {
   margin-top: 22px;
-  padding: 14px 17px;
-  border-radius: 10px;
+  padding: 15px 18px;
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -137,46 +172,59 @@
 }
 
 .account-card {
-  margin-top: 25px;
-  padding: 28px;
+  margin-top: 26px;
+  padding: 34px;
   background: #fff;
-  border: 1px solid #eadfd4;
-  border-radius: 18px;
-  box-shadow: 0 16px 42px rgba(67, 43, 28, 0.07);
+  border: 1px solid #eadccf;
+  border-radius: 26px;
+  box-shadow: 0 18px 48px rgba(67, 43, 28, 0.07);
 }
 
 .account-card-title {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 13px;
 }
 
 .account-card-title svg {
-  color: #d97706;
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: #b8752a;
+}
+
+.account-card-title h2,
+.empty-addresses h2,
+.address-card h3 {
+  color: #3b292c;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 700;
 }
 
 .account-card-title h2 {
-  font-size: 22px;
+  font-size: 30px;
+  line-height: 1.05;
 }
 
 .account-card-title p {
-  margin-top: 5px;
+  margin-top: 6px;
   color: #817168;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .account-form-grid,
 .address-form-grid {
-  margin-top: 24px;
+  margin-top: 27px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .account-form-grid label,
 .address-form-grid label {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .account-form-grid label.full,
@@ -186,35 +234,43 @@
 
 .account-form-grid label > span,
 .address-form-grid label > span {
-  font-size: 13px;
+  color: #49383a;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
 .account-form-grid input,
-.address-form-grid input {
+.address-form-grid input,
+.address-form-grid select {
   width: 100%;
-  min-height: 49px;
-  padding: 0 14px;
+  min-height: 54px;
+  padding: 0 17px;
   color: #3d3029;
   background: #fffdfb;
-  border: 1px solid #ded0c5;
-  border-radius: 10px;
+  border: 1px solid #dfd0c4;
+  border-radius: 15px;
   outline: none;
+  font-family: "Montserrat", sans-serif;
+  font-size: 14px;
+  transition: 0.2s ease;
 }
 
 .account-form-grid input:focus,
-.address-form-grid input:focus {
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+.address-form-grid input:focus,
+.address-form-grid select:focus {
+  border-color: #7f1d33;
+  box-shadow: 0 0 0 4px rgba(127, 29, 51, 0.1);
 }
 
 .account-form-grid input:disabled {
   color: #8c7e75;
-  background: #f5f1ed;
+  background: #f6f1ed;
 }
 
 .account-form-grid small {
   color: #8b7b72;
+  font-size: 12px;
 }
 
 .password-field {
@@ -222,144 +278,160 @@
 }
 
 .password-field input {
-  padding-right: 48px;
+  padding-right: 50px;
 }
 
 .password-field button {
   width: 42px;
   height: 42px;
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 6px;
+  right: 6px;
   display: grid;
   place-items: center;
+  color: #725f59;
   background: transparent;
   border: 0;
+  border-radius: 50%;
   cursor: pointer;
 }
 
-.account-primary-button {
-  min-height: 49px;
-  margin-top: 24px;
-  padding: 0 18px;
+.password-field button:hover {
+  background: #f9eee8;
+}
+
+.account-primary-button,
+.address-toolbar button,
+.empty-addresses button {
+  min-height: 52px;
+  padding: 0 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
   color: #fff;
-  background: #d97706;
+  background: #932a43;
   border: 0;
-  border-radius: 10px;
+  border-radius: 15px;
   cursor: pointer;
-  font-weight: 800;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  transition: 0.22s ease;
 }
 
-.account-primary-button:hover {
-  background: #b85f05;
+.account-primary-button {
+  margin-top: 25px;
+}
+
+.account-primary-button:hover,
+.address-toolbar button:hover,
+.empty-addresses button:hover {
+  background: #691529;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(127, 29, 51, 0.2);
 }
 
 .account-primary-button:disabled {
   opacity: 0.65;
   cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 .google-password-info {
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: 25px;
+  padding: 18px;
   color: #68594f;
   background: #fff6e9;
   border: 1px solid #ecd2ae;
-  border-radius: 10px;
-  line-height: 1.55;
+  border-radius: 15px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .address-toolbar {
-  margin-top: 25px;
-  padding: 20px 22px;
+  margin-top: 26px;
+  padding: 22px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   background: #fff;
   border: 1px solid #eadfd4;
-  border-radius: 14px;
+  border-radius: 18px;
+  box-shadow: 0 12px 34px rgba(65, 42, 27, 0.05);
 }
 
 .address-toolbar p {
   color: #77675d;
-}
-
-.address-toolbar button,
-.empty-addresses button {
-  min-height: 44px;
-  padding: 0 15px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-  background: #d97706;
-  border: 0;
-  border-radius: 9px;
-  cursor: pointer;
-  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .address-grid {
-  margin-top: 22px;
+  margin-top: 23px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
 }
 
 .address-card {
-  padding: 23px;
+  padding: 26px;
   position: relative;
   background: #fff;
   border: 1px solid #eadfd4;
-  border-radius: 16px;
-  box-shadow: 0 12px 34px rgba(65, 42, 27, 0.07);
+  border-radius: 22px;
+  box-shadow: 0 14px 38px rgba(65, 42, 27, 0.07);
 }
 
 .main-address {
-  padding: 6px 9px;
+  padding: 7px 10px;
   position: absolute;
-  top: 17px;
-  right: 17px;
+  top: 18px;
+  right: 18px;
   color: #fff;
-  background: #d97706;
+  background: #7f1d33;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .address-card h3 {
-  padding-right: 75px;
-  font-size: 19px;
+  padding-right: 85px;
+  font-size: 25px;
 }
 
 .address-card p {
-  margin-top: 7px;
+  margin-top: 8px;
   color: #76665d;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .address-actions {
-  margin-top: 20px;
+  margin-top: 22px;
   display: flex;
+  flex-wrap: wrap;
   gap: 9px;
 }
 
 .address-actions button {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 13px;
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #a75809;
-  background: #fff4e5;
+  color: #7f1d33;
+  background: #f9ecef;
   border: 0;
-  border-radius: 8px;
+  border-radius: 11px;
   cursor: pointer;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -369,30 +441,30 @@
 }
 
 .empty-addresses {
-  margin-top: 25px;
-  padding: 70px 25px;
+  margin-top: 26px;
+  padding: 76px 25px;
   display: grid;
   place-items: center;
   color: #96877d;
   background: #fff;
   border: 1px dashed #d9c8ba;
-  border-radius: 18px;
+  border-radius: 24px;
   text-align: center;
 }
 
 .empty-addresses h2 {
   margin-top: 17px;
-  color: #493a32;
+  font-size: 32px;
 }
 
 .empty-addresses p {
-  max-width: 420px;
-  margin-top: 8px;
-  line-height: 1.55;
+  max-width: 430px;
+  margin-top: 9px;
+  line-height: 1.6;
 }
 
 .empty-addresses button {
-  margin-top: 20px;
+  margin-top: 22px;
 }
 
 .address-modal-overlay {
@@ -402,28 +474,31 @@
   z-index: 1300;
   display: grid;
   place-items: center;
-  background: rgba(37, 25, 18, 0.65);
+  background: rgba(37, 25, 18, 0.68);
+  backdrop-filter: blur(4px);
 }
 
 .address-modal {
   width: min(760px, 100%);
   max-height: 92vh;
-  padding: 29px;
+  padding: 34px;
   position: relative;
   background: #fff;
-  border-radius: 18px;
+  border-radius: 24px;
+  box-shadow: 0 35px 85px rgba(30, 20, 15, 0.26);
   overflow-y: auto;
 }
 
 .address-modal-close {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   position: absolute;
   top: 16px;
   right: 16px;
   display: grid;
   place-items: center;
-  background: #fff3e4;
+  color: #7f1d33;
+  background: #f9ecef;
   border: 0;
   border-radius: 50%;
   cursor: pointer;
@@ -438,22 +513,7 @@
 .address-checkbox input {
   width: 19px;
   min-height: 19px;
-}
-
-.address-form-grid select {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 13px;
-  color: inherit;
-  background: inherit;
-  border: 1px solid currentColor;
-  border-radius: 9px;
-  outline: none;
-}
-
-.address-form-grid select:focus {
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+  accent-color: #7f1d33;
 }
 
 @media (max-width: 850px) {
@@ -472,11 +532,16 @@
 
 @media (max-width: 600px) {
   .account-page {
-    padding: 45px 18px;
+    padding: 44px 17px;
   }
 
   .account-heading h1 {
-    font-size: 32px;
+    font-size: 42px;
+  }
+
+  .account-card {
+    padding: 24px 20px;
+    border-radius: 21px;
   }
 
   .account-form-grid,
@@ -490,13 +555,12 @@
   }
 
   .address-toolbar {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
   }
 
   .address-toolbar button {
     width: 100%;
-    justify-content: center;
   }
 
   .address-modal-overlay {
@@ -506,6 +570,260 @@
 
   .address-modal {
     max-height: 94vh;
-    border-radius: 18px 18px 0 0;
+    padding: 27px 20px;
+    border-radius: 22px 22px 0 0;
+  }
+}
+
+/* Identidade tipográfica final */
+.account-user-card strong,
+.account-heading h1,
+.account-card-title h2,
+.empty-addresses h2,
+.address-card h3 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+}
+
+.account-page,
+.account-loading,
+.account-sidebar > button,
+.account-form-grid input,
+.address-form-grid input,
+.address-form-grid select,
+.account-primary-button,
+.address-toolbar button,
+.empty-addresses button,
+.address-actions button {
+  font-family: "Montserrat", sans-serif;
+}
+
+
+/* =========================================================
+   SIDEBAR DA CONTA — VERSÃO 2
+   Visual mais limpo, sem vários blocos bege
+   ========================================================= */
+
+.account-shell {
+  grid-template-columns: 285px minmax(0, 1fr);
+  gap: 36px;
+}
+
+.account-sidebar {
+  padding: 18px;
+  gap: 4px;
+
+  background: #ffffff;
+  border: 1px solid #ead9cc;
+  border-radius: 24px;
+
+  box-shadow:
+    0 18px 48px rgba(75, 16, 27, 0.075);
+
+  backdrop-filter: none;
+}
+
+/* Cabeçalho do usuário */
+
+.account-user-card {
+  margin: 0 0 10px;
+  padding: 18px 16px 20px;
+
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(127, 29, 51, 0.07),
+      rgba(184, 117, 42, 0.06)
+    );
+
+  border: 1px solid rgba(127, 29, 51, 0.07);
+  border-radius: 18px;
+}
+
+.account-user-card::after {
+  content: none;
+}
+
+.account-user-card img,
+.account-user-card > span {
+  width: 58px;
+  height: 58px;
+}
+
+.account-user-card img {
+  border: 3px solid #ffffff;
+
+  box-shadow:
+    0 8px 20px rgba(75, 16, 27, 0.16),
+    0 0 0 1px #ead6c9;
+}
+
+.account-user-card > span {
+  font-family: "Montserrat", sans-serif;
+  font-size: 19px;
+}
+
+.account-user-card strong {
+  max-width: 100%;
+
+  color: #38272a;
+
+  font-family:
+    "DM Serif Display",
+    Georgia,
+    serif;
+
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.account-user-card small {
+  max-width: 100%;
+  margin-top: 5px;
+
+  color: #887771;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+}
+
+/* Navegação */
+
+.account-sidebar > button {
+  min-height: 50px;
+  padding: 0 14px;
+
+  position: relative;
+
+  gap: 12px;
+
+  color: #645551;
+  background: transparent;
+
+  border: 0;
+  border-bottom: 1px solid #f0e6df;
+  border-radius: 0;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    padding-left 0.2s ease;
+}
+
+.account-sidebar > button:last-child {
+  border-bottom: 0;
+}
+
+.account-sidebar > button svg {
+  width: 19px;
+  height: 19px;
+
+  color: #8b7770;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.account-sidebar > button:hover {
+  color: #7f1d33;
+  background: #fcf7f4;
+  transform: none;
+  padding-left: 18px;
+}
+
+.account-sidebar > button:hover svg {
+  color: #7f1d33;
+  transform: scale(1.05);
+}
+
+/* Aba selecionada */
+
+.account-sidebar > button.active {
+  margin: 5px 0;
+  padding-left: 16px;
+
+  color: #ffffff;
+  background:
+    linear-gradient(
+      135deg,
+      #7f1d33,
+      #932a43
+    );
+
+  border-bottom-color: transparent;
+  border-radius: 13px;
+
+  box-shadow:
+    0 10px 24px rgba(127, 29, 51, 0.18);
+}
+
+.account-sidebar > button.active::before {
+  content: none;
+}
+
+.account-sidebar > button.active svg {
+  color: #ffffff;
+}
+
+.account-sidebar > button.active:hover {
+  color: #ffffff;
+  padding-left: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #681428,
+      #7f1d33
+    );
+}
+
+/* Tablet */
+
+@media (max-width: 850px) {
+  .account-shell {
+    gap: 26px;
+  }
+
+  .account-sidebar {
+    position: static;
+    display: block;
+  }
+
+  .account-user-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+}
+
+/* Celular */
+
+@media (max-width: 560px) {
+  .account-sidebar {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .account-user-card {
+    padding: 15px;
+    border-radius: 15px;
+  }
+
+  .account-user-card strong {
+    font-size: 19px;
+  }
+
+  .account-sidebar > button {
+    min-height: 48px;
   }
 }

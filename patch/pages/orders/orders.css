@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Montserrat:wght@400;500;600;700&display=swap");
+
 .orders-page {
   min-height: 100vh;
   padding: 65px 5%;
@@ -633,4 +635,52 @@
   .order-item > strong {
     grid-column: 2;
   }
+}
+
+
+/* Identidade visual final */
+.orders-page,
+.orders-loading,
+.orders-toolbar,
+.order-card {
+  font-family: "Montserrat", sans-serif;
+}
+
+.orders-header h1,
+.order-number strong,
+.order-pix h3,
+.order-section h3,
+.empty-orders h2 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+}
+
+.orders-header > div > span,
+.order-number > svg {
+  color: #7f1d33;
+}
+
+.order-card.highlighted {
+  border-color: #7f1d33;
+  box-shadow: 0 0 0 3px rgba(127, 29, 51, 0.1);
+}
+
+.order-timeline > div.done > span,
+.order-timeline > div.current > span,
+.order-pix-content button {
+  background: #7f1d33;
+  border-color: #7f1d33;
+}
+
+.orders-refresh,
+.order-pix h3,
+.review-block-title {
+  color: #7f1d33;
+}
+
+.order-card,
+.orders-toolbar,
+.order-section,
+.order-pix {
+  border-radius: 20px;
 }

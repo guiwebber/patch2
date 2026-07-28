@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Montserrat:wght@400;500;600;700&display=swap");
+
 .checkout-page {
   min-height: 100vh;
   padding: 55px 5% 90px;
@@ -23,7 +25,7 @@
 
 .checkout-heading h1 {
   margin-top: 7px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "DM Serif Display", Georgia, serif;
   font-size: clamp(38px, 5vw, 56px);
 }
 
@@ -996,4 +998,73 @@
   .shipping-option > strong:last-child {
     grid-column: 2;
   }
+}
+
+
+/* Identidade visual final */
+.checkout-page,
+.checkout-card,
+.checkout-summary,
+.checkout-address-modal {
+  font-family: "Montserrat", sans-serif;
+}
+
+.checkout-heading h1,
+.checkout-card-heading h2,
+.summary-heading h2,
+.checkout-empty h3,
+.review-product h3,
+.review-block-title,
+.summary-total strong {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+}
+
+.checkout-heading > span,
+.progress-item.active,
+.checkout-card-heading svg,
+.summary-heading svg,
+.payment-method > svg {
+  color: #7f1d33;
+}
+
+.progress-item.active > span,
+.progress-item.done > span,
+.checkout-address.selected .address-radio,
+.payment-method.selected .payment-radio,
+.summary-image span {
+  background: #7f1d33;
+  border-color: #7f1d33;
+}
+
+.checkout-address:hover,
+.checkout-address.selected,
+.payment-method:hover,
+.payment-method.selected {
+  background: #fdf3f1;
+  border-color: #7f1d33;
+  box-shadow: 0 0 0 3px rgba(127, 29, 51, 0.09);
+}
+
+.checkout-primary-button,
+.checkout-empty button {
+  background: #7f1d33;
+  border-radius: 15px;
+}
+
+.checkout-primary-button:hover,
+.checkout-empty button:hover {
+  background: #681428;
+}
+
+.checkout-card,
+.checkout-summary {
+  border-radius: 24px;
+}
+
+.checkout-address,
+.payment-method,
+.review-product,
+.review-block {
+  border-radius: 16px;
 }

@@ -89,11 +89,11 @@ export default function MenuBar() {
   }
 
   function handleLogout() {
-  sair();
-  closeMenus();
-  setFavoritesOpen(false);
-  navigate("/");
-}
+    setFavoritesOpen(false);
+    sair();
+    closeMenus();
+    navigate("/");
+  }
 
   function viewFavoriteProduct(category: string) {
     setSelectedCategory(category);
@@ -163,9 +163,7 @@ export default function MenuBar() {
                 )}
               </div>
 
-              <button type="button" onClick={goToProducts}>
-                Novidades
-              </button>
+            
 
               <Link to="/sobre" onClick={closeMenus}>
                 Sobre Nós

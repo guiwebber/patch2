@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Montserrat:wght@400;500;600;700&display=swap");
 
 :root {
   --sf-wine-950: #3b0c14;
@@ -28,10 +29,38 @@
   --sf-success: #2f6f4e;
   --sf-danger: #a33b48;
 
-  --sf-shadow:
-    0 16px 42px rgba(75, 16, 27, 0.08);
-  --sf-shadow-strong:
-    0 22px 60px rgba(75, 16, 27, 0.16);
+  --sf-shadow: 0 16px 42px rgba(75, 16, 27, 0.08);
+  --sf-shadow-strong: 0 22px 60px rgba(75, 16, 27, 0.16);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: "Montserrat", Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+.hero h1,
+.section-header h2,
+.about-hero h1,
+.about-story-content h2,
+.about-section-header h2,
+.account-heading h1,
+.account-card-title h2,
+.admin-header h1,
+.products-admin-header h1,
+.orders-header h1,
+.checkout-heading h1,
+.product-content h3,
+.modal-content h2,
+.cart-header h2,
+.favorites-header h2 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
 }
 
 html {
@@ -70,7 +99,6 @@ textarea:focus-visible {
 .about-page,
 .account-page,
 .account-loading,
-.auth-page,
 .admin-page,
 .admin-loading,
 .orders-page,
@@ -87,7 +115,6 @@ textarea:focus-visible {
 .about-story-content h2,
 .about-section-header h2,
 .account-heading h1,
-.auth-form-header h2,
 .admin-header h1,
 .orders-header h1,
 .checkout-heading h1,
@@ -103,7 +130,6 @@ textarea:focus-visible {
 .about-values-grid p,
 .account-card-title p,
 .account-heading p,
-.auth-form-header p,
 .admin-header p,
 .orders-header p,
 .checkout-card-heading p,
@@ -141,7 +167,6 @@ textarea:focus-visible {
 .account-primary-button,
 .address-toolbar button,
 .empty-addresses button,
-.auth-submit,
 .admin-search button,
 .admin-order-actions button.send,
 .admin-order-actions button.deliver,
@@ -175,8 +200,6 @@ textarea:focus-visible {
 .checkout-card-heading > button,
 .mp-secondary-button,
 .address-actions button,
-.auth-link-button,
-.auth-footer a,
 .order-section > a {
   color: var(--sf-wine-700) !important;
 }
@@ -223,7 +246,6 @@ textarea:focus-visible {
 .account-card,
 .address-toolbar,
 .address-card,
-.auth-panel,
 .admin-summary article,
 .admin-toolbar,
 .admin-order-card,
@@ -257,7 +279,6 @@ textarea:focus-visible {
 
 /* Inputs */
 .search-box,
-.auth-input-wrapper,
 .account-form-grid input,
 .address-form-grid input,
 .address-form-grid select,
@@ -273,8 +294,6 @@ textarea:focus-visible {
   background: var(--sf-white) !important;
   border-color: var(--sf-cream-300) !important;
 }
-
-.auth-input-wrapper:focus-within,
 .account-form-grid input:focus,
 .address-form-grid input:focus,
 .address-form-grid select:focus,
@@ -323,8 +342,7 @@ textarea:focus-visible {
 /* Menu */
 .site-header {
   background: var(--sf-white) !important;
-  box-shadow:
-    0 2px 14px rgba(75, 16, 27, 0.09) !important;
+  box-shadow: 0 2px 14px rgba(75, 16, 27, 0.09) !important;
 }
 
 .desktop-nav > a,
@@ -365,19 +383,17 @@ textarea:focus-visible {
 
 .logged-user-profile:hover .logged-user-photo,
 .logged-user-profile:hover .logged-user-avatar {
-  box-shadow:
-    0 0 0 3px rgba(189, 137, 72, 0.22) !important;
+  box-shadow: 0 0 0 3px rgba(189, 137, 72, 0.22) !important;
 }
 
 /* Footer claro para o logo */
 .site-footer {
   color: var(--sf-ink-900) !important;
-  background:
-    linear-gradient(
-      180deg,
-      var(--sf-cream-100),
-      var(--sf-cream-200)
-    ) !important;
+  background: linear-gradient(
+    180deg,
+    var(--sf-cream-100),
+    var(--sf-cream-200)
+  ) !important;
   border-top: 1px solid var(--sf-cream-300);
 }
 
@@ -403,8 +419,7 @@ textarea:focus-visible {
 }
 
 .footer-logo {
-  filter:
-    drop-shadow(0 4px 12px rgba(75, 16, 27, 0.1));
+  filter: drop-shadow(0 4px 12px rgba(75, 16, 27, 0.1));
 }
 
 /* Hero */
@@ -415,11 +430,7 @@ textarea:focus-visible {
       rgba(189, 137, 72, 0.2),
       transparent 35%
     ),
-    linear-gradient(
-      135deg,
-      var(--sf-cream-50),
-      var(--sf-cream-200)
-    ) !important;
+    linear-gradient(135deg, var(--sf-cream-50), var(--sf-cream-200)) !important;
 }
 
 .hero-art-card {
@@ -468,43 +479,15 @@ textarea:focus-visible {
   background: var(--sf-wine-700) !important;
 }
 
-/* Autenticação */
-.auth-page {
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(118, 32, 49, 0.12),
-      transparent 34%
-    ),
-    linear-gradient(
-      135deg,
-      var(--sf-cream-50),
-      var(--sf-cream-200)
-    ) !important;
-}
-
-.auth-brand {
-  background:
-    linear-gradient(
-      rgba(59, 12, 20, 0.76),
-      rgba(59, 12, 20, 0.82)
-    ),
-    url("https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=1000&q=80")
-      center/cover !important;
-}
-
-.auth-brand-tag {
-  color: var(--sf-wine-900) !important;
-  background: var(--sf-gold-100) !important;
-}
+/* Autenticação
+   Os estilos visuais de login e cadastro ficam em login.css.
+   O theme.css não sobrescreve fundo, painel, inputs ou botões dessas telas.
+*/
 
 /* Sobre */
 .about-hero {
   background:
-    linear-gradient(
-      rgba(59, 12, 20, 0.66),
-      rgba(59, 12, 20, 0.76)
-    ),
+    linear-gradient(rgba(59, 12, 20, 0.66), rgba(59, 12, 20, 0.76)),
     url("https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1600&q=85")
       center/cover !important;
 }
@@ -558,9 +541,7 @@ textarea:focus-visible {
 
 /* Scrollbar */
 * {
-  scrollbar-color:
-    var(--sf-wine-600)
-    var(--sf-cream-200);
+  scrollbar-color: var(--sf-wine-600) var(--sf-cream-200);
 }
 
 *::-webkit-scrollbar {

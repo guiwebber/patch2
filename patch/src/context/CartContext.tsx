@@ -3,14 +3,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
-import type {
-  CartItem,
-  Product,
-} from "../../types/product";
+import type { CartItem, Product } from "../../types/product";
+import { useAuth } from "./AuthContext";
 
 type CartContextData = {
   cart: CartItem[];
@@ -22,10 +21,7 @@ type CartContextData = {
   maiorAltura: number;
   maiorLargura: number;
   maiorComprimento: number;
-  addToCart: (
-    product: Product,
-    quantity?: number,
-  ) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   increaseCartQuantity: (productId: number) => void;
   decreaseCartQuantity: (productId: number) => void;
   removeFromCart: (productId: number) => void;
@@ -36,140 +32,132 @@ type CartProviderProps = {
   children: ReactNode;
 };
 
-const CART_KEY = "patchwork:cart";
+const CartContext = createContext<CartContextData | undefined>(undefined);
 
-const CartContext = createContext<
-  CartContextData | undefined
->(undefined);
+function criarChaveCarrinho(usuarioId: number) {
+  return `patchwork:cart:usuario:${usuarioId}`;
+}
 
-function readSavedCart(): CartItem[] {
+function lerCarrinhoSalvo(chave: string): CartItem[] {
   try {
-    const savedCart = localStorage.getItem(CART_KEY);
+    const valor = localStorage.getItem(chave);
 
-    if (!savedCart) {
+    if (!valor) {
       return [];
     }
 
-    const parsedCart: unknown = JSON.parse(savedCart);
-
-    return Array.isArray(parsedCart)
-      ? (parsedCart as CartItem[])
-      : [];
+    const convertido: unknown = JSON.parse(valor);
+    return Array.isArray(convertido) ? (convertido as CartItem[]) : [];
   } catch {
     return [];
   }
 }
 
-export function CartProvider({
-  children,
-}: CartProviderProps) {
-  const [cart, setCart] =
-    useState<CartItem[]>(readSavedCart);
+export function CartProvider({ children }: CartProviderProps) {
+  const { usuario, carregandoAutenticacao } = useAuth();
+
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const chaveCarregadaRef = useRef<string | null>(null);
+
+  const chaveCarrinho = usuario
+    ? criarChaveCarrinho(usuario.id)
+    : null;
 
   useEffect(() => {
-    localStorage.setItem(
-      CART_KEY,
-      JSON.stringify(cart),
-    );
-  }, [cart]);
-
-  function addToCart(
-    product: Product,
-    quantity = 1,
-  ) {
-    if (quantity < 1) {
+    if (carregandoAutenticacao) {
       return;
     }
 
-    setCart((currentCart: CartItem[]) => {
-      const existingItem = currentCart.find(
-        (item: CartItem) =>
-          item.product.id === product.id,
+    if (!chaveCarrinho) {
+      chaveCarregadaRef.current = null;
+      setCart([]);
+      return;
+    }
+
+    chaveCarregadaRef.current = chaveCarrinho;
+    setCart(lerCarrinhoSalvo(chaveCarrinho));
+  }, [carregandoAutenticacao, chaveCarrinho]);
+
+  useEffect(() => {
+    if (!chaveCarrinho || chaveCarregadaRef.current !== chaveCarrinho) {
+      return;
+    }
+
+    if (cart.length === 0) {
+      localStorage.removeItem(chaveCarrinho);
+      return;
+    }
+
+    localStorage.setItem(chaveCarrinho, JSON.stringify(cart));
+  }, [cart, chaveCarrinho]);
+
+  function addToCart(product: Product, quantity = 1) {
+    if (!usuario || quantity < 1) {
+      return;
+    }
+
+    setCart((atual) => {
+      const existente = atual.find(
+        (item) => item.product.id === product.id,
       );
 
-      if (existingItem) {
-        return currentCart.map(
-          (item: CartItem) =>
-            item.product.id === product.id
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity + quantity,
-                }
-              : item,
+      if (existente) {
+        return atual.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item,
         );
       }
 
-      return [
-        ...currentCart,
-        {
-          product,
-          quantity,
-        },
-      ];
+      return [...atual, { product, quantity }];
     });
   }
 
   function increaseCartQuantity(productId: number) {
-    setCart((currentCart: CartItem[]) =>
-      currentCart.map((item: CartItem) =>
+    setCart((atual) =>
+      atual.map((item) =>
         item.product.id === productId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
+          ? { ...item, quantity: item.quantity + 1 }
           : item,
       ),
     );
   }
 
   function decreaseCartQuantity(productId: number) {
-    setCart((currentCart: CartItem[]) =>
-      currentCart
-        .map((item: CartItem) =>
+    setCart((atual) =>
+      atual
+        .map((item) =>
           item.product.id === productId
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
+            ? { ...item, quantity: item.quantity - 1 }
             : item,
         )
-        .filter(
-          (item: CartItem) =>
-            item.quantity > 0,
-        ),
+        .filter((item) => item.quantity > 0),
     );
   }
 
   function removeFromCart(productId: number) {
-    setCart((currentCart: CartItem[]) =>
-      currentCart.filter(
-        (item: CartItem) =>
-          item.product.id !== productId,
-      ),
+    setCart((atual) =>
+      atual.filter((item) => item.product.id !== productId),
     );
   }
 
   function clearCart() {
     setCart([]);
+
+    if (chaveCarrinho) {
+      localStorage.removeItem(chaveCarrinho);
+    }
   }
 
   const cartQuantity = useMemo(
-    () =>
-      cart.reduce(
-        (total: number, item: CartItem) =>
-          total + item.quantity,
-        0,
-      ),
+    () => cart.reduce((total, item) => total + item.quantity, 0),
     [cart],
   );
 
   const cartTotal = useMemo(
     () =>
       cart.reduce(
-        (total: number, item: CartItem) =>
-          total +
-          item.product.price * item.quantity,
+        (total, item) => total + item.product.price * item.quantity,
         0,
       ),
     [cart],
@@ -179,12 +167,7 @@ export function CartProvider({
     () =>
       cart.length === 0
         ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.producaoMinDias,
-            ),
-          ),
+        : Math.max(...cart.map((item) => item.product.producaoMinDias)),
     [cart],
   );
 
@@ -192,21 +175,14 @@ export function CartProvider({
     () =>
       cart.length === 0
         ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.producaoMaxDias,
-            ),
-          ),
+        : Math.max(...cart.map((item) => item.product.producaoMaxDias)),
     [cart],
   );
 
   const pesoTotal = useMemo(
     () =>
       cart.reduce(
-        (total: number, item: CartItem) =>
-          total +
-          item.product.peso * item.quantity,
+        (total, item) => total + item.product.peso * item.quantity,
         0,
       ),
     [cart],
@@ -216,12 +192,7 @@ export function CartProvider({
     () =>
       cart.length === 0
         ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.altura,
-            ),
-          ),
+        : Math.max(...cart.map((item) => item.product.altura)),
     [cart],
   );
 
@@ -229,12 +200,7 @@ export function CartProvider({
     () =>
       cart.length === 0
         ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.largura,
-            ),
-          ),
+        : Math.max(...cart.map((item) => item.product.largura)),
     [cart],
   );
 
@@ -242,12 +208,7 @@ export function CartProvider({
     () =>
       cart.length === 0
         ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.comprimento,
-            ),
-          ),
+        : Math.max(...cart.map((item) => item.product.comprimento)),
     [cart],
   );
 

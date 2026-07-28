@@ -24,10 +24,16 @@ import "./home.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+const PENDING_ACTION_KEY = "patchwork:pending-action";
+
+type PendingAction =
+  | { type: "favorite"; product: Product }
+  | { type: "cart"; product: Product; quantity: number };
+
 const heroSlides = [
   {
     image:
-      "https://images.unsplash.com/photo-1590736969955-71cc94901144?auto=format&fit=crop&w=1400&q=85",
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
     label: "Feito à mão",
     title: "Peças exclusivas",
     description: "Produção artesanal e acabamento delicado.",
@@ -61,8 +67,13 @@ export default function Home() {
     removeFromCart,
   } = useCart();
 
-  const { selectedCategory, setSelectedCategory, toggleFavorite, isFavorite } =
-    useStore();
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    addFavorite,
+    toggleFavorite,
+    isFavorite,
+  } = useStore();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -134,6 +145,36 @@ export default function Home() {
     };
   }, [selectedProduct]);
 
+  useEffect(() => {
+    if (!estaLogado) {
+      return;
+    }
+
+    const pendingValue = sessionStorage.getItem(PENDING_ACTION_KEY);
+
+    if (!pendingValue) {
+      return;
+    }
+
+    sessionStorage.removeItem(PENDING_ACTION_KEY);
+
+    try {
+      const pending = JSON.parse(pendingValue) as PendingAction;
+
+      if (pending.type === "favorite") {
+        addFavorite(pending.product);
+        return;
+      }
+
+      if (pending.type === "cart") {
+        addToCart(pending.product, pending.quantity);
+        setCartOpen(true);
+      }
+    } catch (error) {
+      console.error("Não foi possível concluir a ação após o login:", error);
+    }
+  }, [estaLogado, addFavorite, addToCart]);
+
   const filteredProducts = useMemo(() => {
     const searchNormalized = search.trim().toLowerCase();
 
@@ -189,7 +230,41 @@ export default function Home() {
     });
   }
 
+  function irParaLoginComAcao(acao: PendingAction) {
+    sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(acao));
+
+    closeProduct();
+    setCartOpen(false);
+
+    navigate("/login", {
+      state: {
+        redirectTo: "/",
+      },
+    });
+  }
+
+  function handleToggleFavorite(product: Product) {
+    if (!estaLogado) {
+      irParaLoginComAcao({
+        type: "favorite",
+        product,
+      });
+      return;
+    }
+
+    toggleFavorite(product);
+  }
+
   function handleAddToCart(product: Product, quantity = 1) {
+    if (!estaLogado) {
+      irParaLoginComAcao({
+        type: "cart",
+        product,
+        quantity,
+      });
+      return;
+    }
+
     addToCart(product, quantity);
     closeProduct();
     setCartOpen(true);
@@ -435,7 +510,7 @@ export default function Home() {
                       }
                       onClick={(event) => {
                         event.stopPropagation();
-                        toggleFavorite(product);
+                        handleToggleFavorite(product);
                       }}
                     >
                       <Heart
@@ -589,7 +664,7 @@ export default function Home() {
                       ? "modal-favorite-button active"
                       : "modal-favorite-button"
                   }
-                  onClick={() => toggleFavorite(selectedProduct)}
+                  onClick={() => handleToggleFavorite(selectedProduct)}
                   aria-label="Alternar favorito"
                 >
                   <Heart

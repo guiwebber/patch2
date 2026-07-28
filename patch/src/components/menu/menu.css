@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Montserrat:wght@400;500;600;700&display=swap");
 * {
   margin: 0;
   padding: 0;
@@ -29,7 +30,7 @@
   background: transparent;
   border: 0;
   cursor: pointer;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "DM Serif Display", Georgia, serif;
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.4px;
@@ -53,20 +54,31 @@
 .desktop-nav > button,
 .categories-trigger {
   padding: 10px 0;
-  color: #4c4039;
+
+  color: #4e3a3d;
   background: transparent;
   border: 0;
+
   cursor: pointer;
   text-decoration: none;
-  font-size: 15px;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
   font-weight: 600;
-  transition: color 0.2s;
+
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .desktop-nav > a:hover,
 .desktop-nav > button:hover,
 .categories-trigger:hover {
-  color: #d97706;
+  color: #812039;
+  transform: translateY(-1px);
 }
 
 .categories-dropdown {
@@ -200,15 +212,21 @@
   background: #d97706;
   font-weight: 800;
 }
-
 .logged-user-name {
   max-width: 110px;
-  color: #45382f;
+
+  color: #4e3a3d;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
-  font-weight: 700;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+
+  letter-spacing: 0.2px;
+  text-transform: capitalize;
 }
 
 .logout-button {
@@ -230,6 +248,16 @@
 .mobile-menu-button,
 .mobile-menu {
   display: none;
+}
+
+.mobile-menu > a,
+.mobile-menu > button {
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
 }
 
 .favorites-overlay {
@@ -526,6 +554,8 @@
   cursor: pointer;
 }
 
+
+
 .logged-user-profile:hover .logged-user-name {
   color: #d97706;
 }
@@ -553,5 +583,260 @@
   .favorite-item > img {
     width: 78px;
     height: 90px;
+  }
+}
+
+
+/* Identidade tipográfica final */
+.site-header,
+.favorites-drawer {
+  font-family: "Montserrat", sans-serif;
+}
+
+.menu-logo {
+  font-family: "DM Serif Display", Georgia, serif;
+}
+
+.desktop-nav > a,
+.desktop-nav > button,
+.categories-trigger {
+  letter-spacing: 0.08em;
+}
+
+.categories-dropdown-menu button,
+.mobile-categories button,
+.favorites-header p,
+.favorite-item-content span,
+.view-favorite-button,
+.favorites-footer button,
+.empty-favorites p,
+.empty-favorites button {
+  font-family: "Montserrat", sans-serif;
+}
+
+.favorites-header h2,
+.favorite-item-content h3,
+.empty-favorites h3 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+}
+
+.menu-icon-button:hover,
+.logged-user-profile:hover .logged-user-name {
+  color: #7f1d33;
+}
+
+.favorites-count,
+.logged-user-avatar,
+.view-favorite-button,
+.empty-favorites button,
+.mobile-categories button.active {
+  background: #7f1d33;
+}
+
+.categories-dropdown-menu button:hover,
+.categories-dropdown-menu button.active {
+  color: #7f1d33;
+  background: #f9ecef;
+}
+
+
+/* =========================================================
+   REFINAMENTO FINAL — MENU
+   ========================================================= */
+
+.site-header {
+  height: 108px;
+  border-bottom: 1px solid rgba(127, 29, 51, 0.06);
+  box-shadow: 0 3px 18px rgba(75, 16, 27, 0.07);
+}
+
+.menu-container {
+  width: min(1380px, 92%);
+}
+
+.menu-logo {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.menu-logo-img {
+  width: 190px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.menu-logo:hover .menu-logo-img {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 7px 14px rgba(127, 29, 51, 0.1));
+}
+
+.menu-desktop {
+  gap: 34px;
+}
+
+.desktop-nav {
+  gap: 27px;
+}
+
+.desktop-nav > a,
+.desktop-nav > button,
+.categories-trigger {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+.desktop-nav > a::after,
+.desktop-nav > button::after,
+.categories-trigger::after {
+  content: "";
+  width: 0;
+  height: 2px;
+  position: absolute;
+  left: 0;
+  bottom: 3px;
+  background: #7f1d33;
+  border-radius: 999px;
+  transition: width 0.22s ease;
+}
+
+.desktop-nav > a,
+.desktop-nav > button,
+.categories-trigger {
+  position: relative;
+}
+
+.desktop-nav > a:hover::after,
+.desktop-nav > button:hover::after,
+.categories-trigger:hover::after {
+  width: 100%;
+}
+
+.categories-dropdown-menu {
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(50, 32, 20, 0.14);
+}
+
+.categories-dropdown-menu button {
+  border-radius: 11px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+}
+
+.categories-dropdown-menu button:hover,
+.categories-dropdown-menu button.active {
+  color: #7f1d33;
+  background: #f9ecef;
+}
+
+.menu-actions {
+  gap: 12px;
+}
+
+.menu-icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.menu-icon-button:hover {
+  color: #7f1d33;
+  background: #f9ecef;
+}
+
+.favorites-count {
+  background: #7f1d33;
+}
+
+.logged-user {
+  gap: 8px;
+}
+
+.logged-user-profile {
+  min-height: 44px;
+  padding: 3px 9px 3px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.logged-user-profile:hover {
+  background: #fbf4f1;
+  border-color: #ead9cf;
+  transform: translateY(-1px);
+}
+
+.logged-user-photo,
+.logged-user-avatar {
+  width: 39px;
+  height: 39px;
+}
+
+.logged-user-photo {
+  border-color: #e7c99f;
+}
+
+.logged-user-name {
+  max-width: 105px;
+  font-size: 12px;
+}
+
+.logout-button {
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.logout-button:hover {
+  color: #8f293c;
+  background: #fff0f2;
+  transform: translateX(1px);
+}
+
+.favorites-drawer {
+  border-left: 1px solid #eadbd2;
+}
+
+.favorites-header h2,
+.favorite-item-content h3,
+.empty-favorites h3 {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    height: 92px;
+  }
+
+  .menu-logo-img {
+    width: 165px;
+  }
+}
+
+@media (max-width: 560px) {
+  .site-header {
+    height: 82px;
+  }
+
+  .menu-container {
+    width: calc(100% - 30px);
+  }
+
+  .menu-logo-img {
+    width: 145px;
   }
 }

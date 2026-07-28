@@ -8,232 +8,124 @@ import {
   type ReactNode,
 } from "react";
 
-import type {
-  Product,
-} from "../../types/product";
-
-import {
-  useAuth,
-} from "./AuthContext";
+import type { Product } from "../../types/product";
+import { useAuth } from "./AuthContext";
 
 type StoreContextData = {
   favorites: Product[];
   favoritesOpen: boolean;
   selectedCategory: string;
-
-  setFavoritesOpen: (
-    open: boolean,
-  ) => void;
-
-  setSelectedCategory: (
-    category: string,
-  ) => void;
-
-  toggleFavorite: (
-    product: Product,
-  ) => void;
-
-  removeFavorite: (
-    productId: number,
-  ) => void;
-
+  setFavoritesOpen: (open: boolean) => void;
+  setSelectedCategory: (category: string) => void;
+  addFavorite: (product: Product) => void;
+  toggleFavorite: (product: Product) => void;
+  removeFavorite: (productId: number) => void;
   clearFavorites: () => void;
-
-  isFavorite: (
-    productId: number,
-  ) => boolean;
+  isFavorite: (productId: number) => boolean;
 };
 
-const StoreContext =
-  createContext<
-    StoreContextData | undefined
-  >(undefined);
+const StoreContext = createContext<StoreContextData | undefined>(undefined);
 
 type StoreProviderProps = {
   children: ReactNode;
 };
 
-function criarChaveFavoritos(
-  usuarioId?: number,
-) {
-  if (
-    Number.isInteger(usuarioId)
-  ) {
-    return `patchwork:favorites:usuario:${usuarioId}`;
-  }
-
-  return "patchwork:favorites:visitante";
+function criarChaveFavoritos(usuarioId: number) {
+  return `patchwork:favorites:usuario:${usuarioId}`;
 }
 
-function lerFavoritosSalvos(
-  chave: string,
-): Product[] {
+function lerFavoritosSalvos(chave: string): Product[] {
   try {
-    const favoritosSalvos =
-      localStorage.getItem(
-        chave,
-      );
+    const valor = localStorage.getItem(chave);
 
-    if (!favoritosSalvos) {
+    if (!valor) {
       return [];
     }
 
-    const favoritosConvertidos =
-      JSON.parse(
-        favoritosSalvos,
-      );
-
-    return Array.isArray(
-      favoritosConvertidos,
-    )
-      ? favoritosConvertidos
-      : [];
+    const convertido: unknown = JSON.parse(valor);
+    return Array.isArray(convertido) ? (convertido as Product[]) : [];
   } catch {
     return [];
   }
 }
 
-export function StoreProvider({
-  children,
-}: StoreProviderProps) {
-  const {
-    usuario,
-    carregandoAutenticacao,
-  } = useAuth();
+export function StoreProvider({ children }: StoreProviderProps) {
+  const { usuario, carregandoAutenticacao } = useAuth();
 
-  const chaveFavoritos =
-    criarChaveFavoritos(
-      usuario?.id,
-    );
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
 
-  const [
-    favorites,
-    setFavorites,
-  ] = useState<Product[]>([]);
+  const chaveCarregadaRef = useRef<string | null>(null);
 
-  const [
-    favoritesOpen,
-    setFavoritesOpen,
-  ] = useState(false);
-
-  const [
-    selectedCategory,
-    setSelectedCategory,
-  ] = useState("Todos");
-
-  /*
-   * Evita salvar os favoritos da conta
-   * anterior na chave da nova conta
-   * durante a troca de usuário.
-   */
-  const ignorarProximoSalvamento =
-    useRef(true);
+  const chaveFavoritos = usuario
+    ? criarChaveFavoritos(usuario.id)
+    : null;
 
   useEffect(() => {
-    if (
-      carregandoAutenticacao
-    ) {
+    if (carregandoAutenticacao) {
       return;
     }
-
-    const favoritosDaConta =
-      lerFavoritosSalvos(
-        chaveFavoritos,
-      );
-
-    ignorarProximoSalvamento.current =
-      true;
-
-    setFavorites(
-      favoritosDaConta,
-    );
 
     setFavoritesOpen(false);
-  }, [
-    carregandoAutenticacao,
-    chaveFavoritos,
-  ]);
+
+    if (!chaveFavoritos) {
+      chaveCarregadaRef.current = null;
+      setFavorites([]);
+      return;
+    }
+
+    chaveCarregadaRef.current = chaveFavoritos;
+    setFavorites(lerFavoritosSalvos(chaveFavoritos));
+  }, [carregandoAutenticacao, chaveFavoritos]);
 
   useEffect(() => {
-    if (
-      carregandoAutenticacao
-    ) {
+    if (!chaveFavoritos || chaveCarregadaRef.current !== chaveFavoritos) {
       return;
     }
 
-    if (
-      ignorarProximoSalvamento.current
-    ) {
-      ignorarProximoSalvamento.current =
-        false;
-
+    if (favorites.length === 0) {
+      localStorage.removeItem(chaveFavoritos);
       return;
     }
 
-    if (
-      favorites.length === 0
-    ) {
-      localStorage.removeItem(
-        chaveFavoritos,
-      );
+    localStorage.setItem(chaveFavoritos, JSON.stringify(favorites));
+  }, [favorites, chaveFavoritos]);
 
+  function addFavorite(product: Product) {
+    if (!usuario) {
       return;
     }
 
-    localStorage.setItem(
-      chaveFavoritos,
-      JSON.stringify(
-        favorites,
-      ),
-    );
-  }, [
-    favorites,
-    chaveFavoritos,
-    carregandoAutenticacao,
-  ]);
-
-  function toggleFavorite(
-    product: Product,
-  ) {
-    setFavorites(
-      (
-        currentFavorites,
-      ) => {
-        const alreadyFavorite =
-          currentFavorites.some(
-            (favorite) =>
-              favorite.id ===
-              product.id,
-          );
-
-        if (alreadyFavorite) {
-          return currentFavorites.filter(
-            (favorite) =>
-              favorite.id !==
-              product.id,
-          );
-        }
-
-        return [
-          ...currentFavorites,
-          product,
-        ];
-      },
-    );
+    setFavorites((atuais) => {
+      const jaExiste = atuais.some((item) => item.id === product.id);
+      return jaExiste ? atuais : [...atuais, product];
+    });
   }
 
-  function removeFavorite(
-    productId: number,
-  ) {
-    setFavorites(
-      (
-        currentFavorites,
-      ) =>
-        currentFavorites.filter(
-          (favorite) =>
-            favorite.id !==
-            productId,
-        ),
+  function toggleFavorite(product: Product) {
+    if (!usuario) {
+      return;
+    }
+
+    setFavorites((atuais) => {
+      const jaExiste = atuais.some((item) => item.id === product.id);
+
+      if (jaExiste) {
+        return atuais.filter((item) => item.id !== product.id);
+      }
+
+      return [...atuais, product];
+    });
+  }
+
+  function removeFavorite(productId: number) {
+    if (!usuario) {
+      return;
+    }
+
+    setFavorites((atuais) =>
+      atuais.filter((item) => item.id !== productId),
     );
   }
 
@@ -241,19 +133,13 @@ export function StoreProvider({
     setFavorites([]);
     setFavoritesOpen(false);
 
-    localStorage.removeItem(
-      chaveFavoritos,
-    );
+    if (chaveFavoritos) {
+      localStorage.removeItem(chaveFavoritos);
+    }
   }
 
-  function isFavorite(
-    productId: number,
-  ) {
-    return favorites.some(
-      (favorite) =>
-        favorite.id ===
-        productId,
-    );
+  function isFavorite(productId: number) {
+    return favorites.some((item) => item.id === productId);
   }
 
   const value = useMemo(
@@ -261,34 +147,26 @@ export function StoreProvider({
       favorites,
       favoritesOpen,
       selectedCategory,
-
       setFavoritesOpen,
       setSelectedCategory,
-
+      addFavorite,
       toggleFavorite,
       removeFavorite,
       clearFavorites,
       isFavorite,
     }),
-    [
-      favorites,
-      favoritesOpen,
-      selectedCategory,
-    ],
+    [favorites, favoritesOpen, selectedCategory],
   );
 
   return (
-    <StoreContext.Provider
-      value={value}
-    >
+    <StoreContext.Provider value={value}>
       {children}
     </StoreContext.Provider>
   );
 }
 
 export function useStore() {
-  const context =
-    useContext(StoreContext);
+  const context = useContext(StoreContext);
 
   if (!context) {
     throw new Error(
