@@ -41,6 +41,9 @@ createRoot(document.getElementById("root")!).render(
 
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/produtos/:productId" element={<Home />} />
+              <Route path="/produtos/:productId/:slug" element={<Home />} />
+
               <Route path="/sobre" element={<About />} />
               <Route path="/minha-conta" element={<Account />} />
               <Route path="/meus-pedidos" element={<Orders />} />

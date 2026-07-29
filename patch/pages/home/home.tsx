@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -25,6 +25,16 @@ import "./home.css";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const PENDING_ACTION_KEY = "patchwork:pending-action";
+
+function createProductSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 type PendingAction =
   | { type: "favorite"; product: Product }
@@ -56,6 +66,8 @@ const heroSlides = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { productId } = useParams<{ productId?: string }>();
   const { estaLogado } = useAuth();
   const {
     cart,
@@ -128,6 +140,39 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (productsLoading || productsError) {
+      return;
+    }
+
+    if (!productId) {
+      setSelectedProduct(null);
+      setModalQuantity(1);
+      setModalImageIndex(0);
+      return;
+    }
+
+    const productFromUrl = products.find(
+      (product) => String(product.id) === productId,
+    );
+
+    if (!productFromUrl) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    setSelectedProduct((currentProduct) => {
+      if (currentProduct?.id === productFromUrl.id) {
+        return currentProduct;
+      }
+
+      return productFromUrl;
+    });
+
+    setModalQuantity(1);
+    setModalImageIndex(0);
+  }, [navigate, productId, products, productsError, productsLoading]);
+
+  useEffect(() => {
     const interval = window.setInterval(() => {
       setHeroIndex((current) => (current + 1) % heroSlides.length);
     }, 5000);
@@ -190,16 +235,40 @@ export default function Home() {
     });
   }, [products, search, selectedCategory]);
 
-  function openProduct(product: Product) {
-    setSelectedProduct(product);
+  function resetProductModal() {
+    setSelectedProduct(null);
     setModalQuantity(1);
     setModalImageIndex(0);
   }
 
-  function closeProduct() {
-    setSelectedProduct(null);
+  function openProduct(product: Product) {
+    setSelectedProduct(product);
     setModalQuantity(1);
     setModalImageIndex(0);
+
+    const slug = createProductSlug(product.name);
+
+    navigate(`/produtos/${product.id}/${slug}`, {
+      state: {
+        productModal: true,
+        backgroundPath: location.pathname,
+      },
+    });
+  }
+
+  function closeProduct() {
+    resetProductModal();
+
+    const navigationState = location.state as
+      | { productModal?: boolean; backgroundPath?: string }
+      | null;
+
+    if (navigationState?.productModal) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/", { replace: true });
   }
 
   function changeHero(direction: "previous" | "next") {
@@ -233,7 +302,7 @@ export default function Home() {
   function irParaLoginComAcao(acao: PendingAction) {
     sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(acao));
 
-    closeProduct();
+    resetProductModal();
     setCartOpen(false);
 
     navigate("/login", {

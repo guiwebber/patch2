@@ -6,7 +6,17 @@ export type Product = {
   price: number;
   oldPrice?: number;
   image: string;
+  images?: string[];
   featured?: boolean;
+  active?: boolean;
+
+  peso: number;
+  altura: number;
+  largura: number;
+  comprimento: number;
+
+  producaoMinDias: number;
+  producaoMaxDias: number;
 };
 
 export type CartItem = {
