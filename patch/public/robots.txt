@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /signup
+Disallow: /minha-conta
+Disallow: /meus-pedidos
+Disallow: /checkout
+Disallow: /admin
+
+Sitemap: https://soniaferraz.com/sitemap.xml

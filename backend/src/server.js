@@ -29,6 +29,8 @@ const PORT =
 const origensPermitidas = [
   "http://localhost:5173",
   "https://patch2-lilac.vercel.app",
+  "https://soniaferraz.com",
+  "https://www.soniaferraz.com",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
