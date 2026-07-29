@@ -55,6 +55,8 @@ type EnderecoForm = {
   principal: boolean;
 };
 
+type ErrosEndereco = Partial<Record<keyof EnderecoForm, string>>;
+
 const enderecoInicial: EnderecoForm = {
   nomeDestinatario: "",
   cep: "",
@@ -66,6 +68,8 @@ const enderecoInicial: EnderecoForm = {
   estado: "",
   principal: false,
 };
+
+const errosEnderecoInicial: ErrosEndereco = {};
 
 export default function Account() {
   const navigate = useNavigate();
@@ -83,6 +87,11 @@ export default function Account() {
   const [enderecos, setEnderecos] = useState<Endereco[]>([]);
   const [enderecoForm, setEnderecoForm] =
     useState<EnderecoForm>(enderecoInicial);
+
+  const [errosEndereco, setErrosEndereco] =
+    useState<ErrosEndereco>(errosEnderecoInicial);
+
+  const [erroModalEndereco, setErroModalEndereco] = useState("");
   const [enderecoEditandoId, setEnderecoEditandoId] = useState<number | null>(
     null,
   );
@@ -210,7 +219,7 @@ export default function Account() {
       setCarregando(true);
 
       const response = await fetch(`${API_URL}/perfil`, {
-        method: "PATCH",
+        method: "PUT",
         headers: authHeaders(),
         body: JSON.stringify({
           nome: nome.trim(),
@@ -252,7 +261,7 @@ export default function Account() {
       setCarregando(true);
 
       const response = await fetch(`${API_URL}/perfil/senha`, {
-        method: "PATCH",
+        method: "PUT",
         headers: authHeaders(),
         body: JSON.stringify({
           senhaAtual,
@@ -284,8 +293,109 @@ export default function Account() {
     }
   }
 
+  function limparErroCampoEndereco(campo: keyof EnderecoForm) {
+    setErrosEndereco((errosAtuais) => {
+      if (!errosAtuais[campo]) {
+        return errosAtuais;
+      }
+
+      const novosErros = { ...errosAtuais };
+      delete novosErros[campo];
+
+      return novosErros;
+    });
+
+    setErroModalEndereco("");
+  }
+
+  function alterarCampoEndereco<K extends keyof EnderecoForm>(
+    campo: K,
+    valor: EnderecoForm[K],
+  ) {
+    setEnderecoForm((formAtual) => ({
+      ...formAtual,
+      [campo]: valor,
+    }));
+
+    limparErroCampoEndereco(campo);
+  }
+
+  function validarFormularioEndereco() {
+    const novosErros: ErrosEndereco = {};
+
+    const nomeDestinatario = enderecoForm.nomeDestinatario.trim();
+    const cepNumeros = enderecoForm.cep.replace(/\D/g, "");
+    const rua = enderecoForm.rua.trim();
+    const numero = enderecoForm.numero.trim();
+    const bairro = enderecoForm.bairro.trim();
+    const cidade = enderecoForm.cidade.trim();
+    const estado = enderecoForm.estado.trim();
+
+    if (!nomeDestinatario) {
+      novosErros.nomeDestinatario = "Informe o nome do destinatário.";
+    } else if (nomeDestinatario.length < 3) {
+      novosErros.nomeDestinatario =
+        "Informe um nome com pelo menos 3 caracteres.";
+    }
+
+    if (!cepNumeros) {
+      novosErros.cep = "Informe o CEP.";
+    } else if (cepNumeros.length !== 8) {
+      novosErros.cep = "O CEP deve conter 8 números.";
+    }
+
+    if (!estado) {
+      novosErros.estado = "Selecione o estado.";
+    }
+
+    if (!rua) {
+      novosErros.rua = "Informe a rua ou avenida.";
+    } else if (rua.length < 3) {
+      novosErros.rua = "Informe uma rua válida.";
+    }
+
+    if (!numero) {
+      novosErros.numero = "Informe o número.";
+    } else if (!/^\d+$/.test(numero)) {
+      novosErros.numero = "O número deve conter apenas números.";
+    }
+
+    if (!bairro) {
+      novosErros.bairro = "Informe o bairro.";
+    } else if (bairro.length < 2) {
+      novosErros.bairro = "Informe um bairro válido.";
+    }
+
+    if (!cidade) {
+      novosErros.cidade = "Informe a cidade.";
+    } else if (cidade.length < 2) {
+      novosErros.cidade = "Informe uma cidade válida.";
+    }
+
+    setErrosEndereco(novosErros);
+
+    const camposComErro = Object.keys(novosErros);
+
+    if (camposComErro.length > 0) {
+      window.setTimeout(() => {
+        const primeiroCampo = camposComErro[0];
+
+        document
+          .querySelector<HTMLInputElement | HTMLSelectElement>(
+            `[name="${primeiroCampo}"]`,
+          )
+          ?.focus();
+      }, 50);
+
+      return false;
+    }
+
+    return true;
+  }
+
   function editarEndereco(endereco: Endereco) {
     setEnderecoEditandoId(endereco.id);
+
     setEnderecoForm({
       nomeDestinatario: endereco.nome_destinatario,
       cep: formatarCep(endereco.cep),
@@ -297,6 +407,9 @@ export default function Account() {
       estado: endereco.estado,
       principal: endereco.principal,
     });
+
+    setErrosEndereco(errosEnderecoInicial);
+    setErroModalEndereco("");
     setMostrarFormulario(true);
     limparAvisos();
   }
@@ -304,37 +417,31 @@ export default function Account() {
   function novoEndereco() {
     setEnderecoEditandoId(null);
     setEnderecoForm(enderecoInicial);
+    setErrosEndereco(errosEnderecoInicial);
+    setErroModalEndereco("");
     setMostrarFormulario(true);
     limparAvisos();
   }
 
   function fecharFormularioEndereco() {
+    if (carregando) {
+      return;
+    }
+
     setMostrarFormulario(false);
     setEnderecoEditandoId(null);
     setEnderecoForm(enderecoInicial);
+    setErrosEndereco(errosEnderecoInicial);
+    setErroModalEndereco("");
   }
 
   async function salvarEndereco(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    limparAvisos();
 
-    const camposObrigatorios = [
-      enderecoForm.nomeDestinatario,
-      enderecoForm.cep,
-      enderecoForm.rua,
-      enderecoForm.numero,
-      enderecoForm.bairro,
-      enderecoForm.cidade,
-      enderecoForm.estado,
-    ];
+    setErroModalEndereco("");
+    setErrosEndereco(errosEnderecoInicial);
 
-    if (camposObrigatorios.some((campo: string) => !campo.trim())) {
-      setErro("Preencha todos os campos obrigatórios do endereço.");
-      return;
-    }
-
-    if (enderecoForm.cep.replace(/\D/g, "").length !== 8) {
-      setErro("Informe um CEP válido com 8 números.");
+    if (!validarFormularioEndereco()) {
       return;
     }
 
@@ -352,7 +459,14 @@ export default function Account() {
           headers: authHeaders(),
           body: JSON.stringify({
             ...enderecoForm,
+            nomeDestinatario: enderecoForm.nomeDestinatario.trim(),
             cep: enderecoForm.cep.replace(/\D/g, ""),
+            rua: enderecoForm.rua.trim(),
+            numero: enderecoForm.numero.trim(),
+            complemento: enderecoForm.complemento.trim(),
+            bairro: enderecoForm.bairro.trim(),
+            cidade: enderecoForm.cidade.trim(),
+            estado: enderecoForm.estado.trim(),
           }),
         },
       );
@@ -364,16 +478,52 @@ export default function Account() {
       const data = await response.json();
 
       if (!response.ok) {
-        setErro(data.erro || "Não foi possível salvar o endereço.");
+        const mensagemErro =
+          data.erro || "Não foi possível salvar o endereço.";
+
+        const mensagemNormalizada = mensagemErro.toLowerCase();
+
+        if (
+          mensagemNormalizada.includes("destinatário") ||
+          mensagemNormalizada.includes("destinatario")
+        ) {
+          setErrosEndereco({ nomeDestinatario: mensagemErro });
+        } else if (mensagemNormalizada.includes("cep")) {
+          setErrosEndereco({ cep: mensagemErro });
+        } else if (mensagemNormalizada.includes("estado")) {
+          setErrosEndereco({ estado: mensagemErro });
+        } else if (mensagemNormalizada.includes("rua")) {
+          setErrosEndereco({ rua: mensagemErro });
+        } else if (
+          mensagemNormalizada.includes("número") ||
+          mensagemNormalizada.includes("numero")
+        ) {
+          setErrosEndereco({ numero: mensagemErro });
+        } else if (mensagemNormalizada.includes("bairro")) {
+          setErrosEndereco({ bairro: mensagemErro });
+        } else if (mensagemNormalizada.includes("cidade")) {
+          setErrosEndereco({ cidade: mensagemErro });
+        } else {
+          setErroModalEndereco(mensagemErro);
+        }
+
         return;
       }
 
-      fecharFormularioEndereco();
-      setMensagem(data.mensagem);
+      setMostrarFormulario(false);
+      setEnderecoEditandoId(null);
+      setEnderecoForm(enderecoInicial);
+      setErrosEndereco(errosEnderecoInicial);
+      setErroModalEndereco("");
+
+      setMensagem(data.mensagem || "Endereço salvo com sucesso.");
       await carregarEnderecos();
     } catch (error) {
       console.error(error);
-      setErro("Não foi possível conectar ao servidor.");
+
+      setErroModalEndereco(
+        "Não foi possível conectar ao servidor. Tente novamente.",
+      );
     } finally {
       setCarregando(false);
     }
@@ -715,45 +865,66 @@ export default function Account() {
             </div>
 
             <div className="address-form-grid">
-              <label className="full">
+              {erroModalEndereco && (
+                <div className="address-modal-error full" role="alert">
+                  {erroModalEndereco}
+                </div>
+              )}
+
+              <label
+                className={`full ${
+                  errosEndereco.nomeDestinatario ? "field-has-error" : ""
+                }`}
+              >
                 <span>Nome do destinatário</span>
                 <input
+                  name="nomeDestinatario"
+                  type="text"
                   value={enderecoForm.nomeDestinatario}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      nomeDestinatario: somenteLetras(event.target.value),
-                    }))
+                    alterarCampoEndereco(
+                      "nomeDestinatario",
+                      somenteLetras(event.target.value),
+                    )
                   }
+                  aria-invalid={Boolean(errosEndereco.nomeDestinatario)}
                 />
+                {errosEndereco.nomeDestinatario && (
+                  <small className="address-field-error">
+                    {errosEndereco.nomeDestinatario}
+                  </small>
+                )}
               </label>
 
-              <label>
+              <label className={errosEndereco.cep ? "field-has-error" : ""}>
                 <span>CEP</span>
                 <input
+                  name="cep"
                   inputMode="numeric"
                   maxLength={9}
                   placeholder="00000-000"
                   value={enderecoForm.cep}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      cep: formatarCep(event.target.value),
-                    }))
+                    alterarCampoEndereco("cep", formatarCep(event.target.value))
                   }
+                  aria-invalid={Boolean(errosEndereco.cep)}
                 />
+                {errosEndereco.cep && (
+                  <small className="address-field-error">
+                    {errosEndereco.cep}
+                  </small>
+                )}
               </label>
 
-              <label>
+              <label className={errosEndereco.estado ? "field-has-error" : ""}>
                 <span>Estado</span>
                 <select
+                  name="estado"
                   value={enderecoForm.estado}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      estado: event.target.value,
-                    }))
+                    alterarCampoEndereco("estado", event.target.value)
                   }
+                  aria-invalid={Boolean(errosEndereco.estado)}
                 >
                   <option value="">Selecione</option>
 
@@ -763,72 +934,106 @@ export default function Account() {
                     </option>
                   ))}
                 </select>
+                {errosEndereco.estado && (
+                  <small className="address-field-error">
+                    {errosEndereco.estado}
+                  </small>
+                )}
               </label>
 
-              <label className="full">
+              <label
+                className={`full ${
+                  errosEndereco.rua ? "field-has-error" : ""
+                }`}
+              >
                 <span>Rua</span>
                 <input
+                  name="rua"
+                  type="text"
                   value={enderecoForm.rua}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      rua: event.target.value,
-                    }))
+                    alterarCampoEndereco("rua", event.target.value)
                   }
+                  aria-invalid={Boolean(errosEndereco.rua)}
                 />
+                {errosEndereco.rua && (
+                  <small className="address-field-error">
+                    {errosEndereco.rua}
+                  </small>
+                )}
               </label>
 
-              <label>
+              <label className={errosEndereco.numero ? "field-has-error" : ""}>
                 <span>Número</span>
                 <input
+                  name="numero"
                   inputMode="numeric"
                   value={enderecoForm.numero}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      numero: somenteNumeros(event.target.value, 8),
-                    }))
+                    alterarCampoEndereco(
+                      "numero",
+                      somenteNumeros(event.target.value, 8),
+                    )
                   }
+                  aria-invalid={Boolean(errosEndereco.numero)}
                 />
+                {errosEndereco.numero && (
+                  <small className="address-field-error">
+                    {errosEndereco.numero}
+                  </small>
+                )}
               </label>
 
               <label>
                 <span>Complemento</span>
                 <input
+                  name="complemento"
+                  type="text"
+                  placeholder="Opcional"
                   value={enderecoForm.complemento}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      complemento: event.target.value,
-                    }))
+                    alterarCampoEndereco("complemento", event.target.value)
                   }
                 />
               </label>
 
-              <label>
+              <label className={errosEndereco.bairro ? "field-has-error" : ""}>
                 <span>Bairro</span>
                 <input
+                  name="bairro"
+                  type="text"
                   value={enderecoForm.bairro}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      bairro: event.target.value,
-                    }))
+                    alterarCampoEndereco("bairro", event.target.value)
                   }
+                  aria-invalid={Boolean(errosEndereco.bairro)}
                 />
+                {errosEndereco.bairro && (
+                  <small className="address-field-error">
+                    {errosEndereco.bairro}
+                  </small>
+                )}
               </label>
 
-              <label>
+              <label className={errosEndereco.cidade ? "field-has-error" : ""}>
                 <span>Cidade</span>
                 <input
+                  name="cidade"
+                  type="text"
                   value={enderecoForm.cidade}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      cidade: somenteLetras(event.target.value),
-                    }))
+                    alterarCampoEndereco(
+                      "cidade",
+                      somenteLetras(event.target.value),
+                    )
                   }
+                  aria-invalid={Boolean(errosEndereco.cidade)}
                 />
+                {errosEndereco.cidade && (
+                  <small className="address-field-error">
+                    {errosEndereco.cidade}
+                  </small>
+                )}
               </label>
 
               <label className="address-checkbox full">
@@ -836,10 +1041,7 @@ export default function Account() {
                   type="checkbox"
                   checked={enderecoForm.principal}
                   onChange={(event) =>
-                    setEnderecoForm((current) => ({
-                      ...current,
-                      principal: event.target.checked,
-                    }))
+                    alterarCampoEndereco("principal", event.target.checked)
                   }
                 />
                 <span>Usar como endereço principal</span>

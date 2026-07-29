@@ -827,3 +827,52 @@
     min-height: 48px;
   }
 }
+
+/* Validação campo a campo do modal de endereço */
+
+.address-form-grid label {
+  min-width: 0;
+}
+
+.address-form-grid .address-field-error {
+  margin-top: -2px;
+  display: block;
+  color: #b4233c;
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.address-form-grid label.field-has-error > span:first-child {
+  color: #a51f38;
+}
+
+.address-form-grid label.field-has-error input,
+.address-form-grid label.field-has-error select {
+  color: #61202d;
+  background: #fff9fa;
+  border-color: #c83b55;
+  box-shadow: 0 0 0 3px rgba(200, 59, 85, 0.1);
+}
+
+.address-form-grid label.field-has-error input:focus,
+.address-form-grid label.field-has-error select:focus {
+  border-color: #a51f38;
+  box-shadow: 0 0 0 4px rgba(165, 31, 56, 0.13);
+}
+
+.address-modal-error {
+  padding: 13px 15px;
+  color: #952b3d;
+  background: #fff1f3;
+  border: 1px solid #efbac3;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.address-modal-error.full {
+  grid-column: 1 / -1;
+}
