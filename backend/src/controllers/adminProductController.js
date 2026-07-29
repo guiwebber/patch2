@@ -218,24 +218,36 @@ export async function excluirProdutoAdmin(req, res) {
   const produtoId = Number(req.params.id);
 
   if (!Number.isInteger(produtoId)) {
-    return res.status(400).json({ erro: "ID do produto inválido." });
+    return res.status(400).json({
+      erro: "ID do produto inválido.",
+    });
   }
 
   try {
-    // Exclusão lógica: preserva os produtos dos pedidos antigos.
     const result = await pool.query(
-      `UPDATE produtos SET ativo = FALSE, atualizado_em = NOW() WHERE id = $1 RETURNING id`,
+      `
+      DELETE FROM produtos
+      WHERE id = $1
+      RETURNING id
+      `,
       [produtoId],
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ erro: "Produto não encontrado." });
+      return res.status(404).json({
+        erro: "Produto não encontrado.",
+      });
     }
 
-    return res.json({ mensagem: "Produto removido da loja com sucesso." });
+    return res.json({
+      mensagem: "Produto excluído com sucesso.",
+    });
   } catch (error) {
     console.error("Erro ao excluir produto:", error);
-    return res.status(500).json({ erro: "Erro interno ao excluir produto." });
+
+    return res.status(500).json({
+      erro: "Erro interno ao excluir produto.",
+    });
   }
 }
 
