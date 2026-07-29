@@ -1,6 +1,5 @@
 import {
   Clock3,
-  Instagram,
   Mail,
   MapPin,
   Phone,
@@ -9,6 +8,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { FaInstagram } from "react-icons/fa";
 
 import Logo from "../../assets/logo.png";
 
@@ -168,7 +168,7 @@ export default function Footer() {
             aria-label="Instagram da Sonia Ferraz"
           >
             <span className="footer-icon">
-              <Instagram size={17} />
+              <FaInstagram size={17} />
             </span>
 
             <span>
