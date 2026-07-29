@@ -1,5 +1,6 @@
 import {
   Clock3,
+  Instagram,
   Mail,
   MapPin,
   Phone,
@@ -156,6 +157,23 @@ export default function Footer() {
             <span>
               <small>E-mail</small>
               contato@patchwork.com.br
+            </span>
+          </a>
+
+          <a
+            className="footer-contact-link"
+            href="https://www.instagram.com/SEU_USUARIO"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram da Sonia Ferraz"
+          >
+            <span className="footer-icon">
+              <Instagram size={17} />
+            </span>
+
+            <span>
+              <small>Instagram</small>
+              @SEU_USUARIO
             </span>
           </a>
         </section>
