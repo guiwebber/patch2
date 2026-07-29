@@ -10,11 +10,11 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const CATEGORIAS_PADRAO = [
   "Cozinha",
   "Decoração",
-  "Bolsas",
+  "Frutas e afins",
   "Guirlandas",
   "Páscoa",
   "Natal",
-  "Banheiro",
+  "Lavabo",
 ];
 
 type FormState = {
