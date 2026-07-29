@@ -162,7 +162,7 @@ export default function Footer() {
 
           <a
             className="footer-contact-link"
-            href="https://www.instagram.com/SEU_USUARIO"
+            href="https://www.instagram.com/sonia_ferraz"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram da Sonia Ferraz"
@@ -173,7 +173,7 @@ export default function Footer() {
 
             <span>
               <small>Instagram</small>
-              @SEU_USUARIO
+              @sonia_ferraz
             </span>
           </a>
         </section>
