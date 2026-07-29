@@ -19,13 +19,13 @@ import { useCart } from "../../src/context/CartContext";
 import { useStore } from "../../src/context/StoreContext";
 import { categories } from "../../data/products";
 import type { Product } from "../../types/product";
+import { supabase } from "../../src/lib/supabase";
 
 import "./home.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const PENDING_ACTION_KEY = "patchwork:pending-action";
-const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache";
+const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache-v2";
 const PRODUCTS_CACHE_TIME = 10 * 60 * 1000;
 
 type ProductsCache = {
@@ -134,18 +134,43 @@ export default function Home() {
       try {
         setProductsLoading(true);
 
-        const response = await fetch(`${API_URL}/produtos`);
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("produtos")
+          .select(
+            "id,nome,categoria,descricao,preco,preco_antigo,imagem,imagens,destaque,ativo,peso,altura,largura,comprimento,producao_min_dias,producao_max_dias",
+          )
+          .eq("ativo", true)
+          .order("id", { ascending: true });
 
-        if (!response.ok) {
-          throw new Error(
-            data.erro || "Não foi possível carregar os produtos.",
-          );
+        if (error) {
+          throw new Error(error.message || "Não foi possível carregar os produtos.");
         }
 
-        const loadedProducts = Array.isArray(data.produtos)
-          ? data.produtos
-          : [];
+        const loadedProducts: Product[] = (data ?? []).map((produto) => ({
+          id: Number(produto.id),
+          name: produto.nome ?? "Produto",
+          category: produto.categoria ?? "Sem categoria",
+          description: produto.descricao ?? "",
+          price: Number(produto.preco ?? 0),
+          oldPrice:
+            produto.preco_antigo == null
+              ? undefined
+              : Number(produto.preco_antigo),
+          image: produto.imagem ?? "",
+          images: Array.isArray(produto.imagens)
+            ? produto.imagens.filter(
+                (imagem): imagem is string => typeof imagem === "string",
+              )
+            : [],
+          featured: Boolean(produto.destaque),
+          active: Boolean(produto.ativo),
+          peso: Number(produto.peso ?? 0),
+          altura: Number(produto.altura ?? 0),
+          largura: Number(produto.largura ?? 0),
+          comprimento: Number(produto.comprimento ?? 0),
+          producaoMinDias: Number(produto.producao_min_dias ?? 0),
+          producaoMaxDias: Number(produto.producao_max_dias ?? 0),
+        }));
 
         if (ativo) {
           setProducts(loadedProducts);
