@@ -9,6 +9,7 @@ type SeoConfig = {
   description: string;
   path: string;
   robots?: string;
+  type?: "website" | "product";
 };
 
 const seoByPath: Record<string, SeoConfig> = {
@@ -68,13 +69,39 @@ const seoByPath: Record<string, SeoConfig> = {
   },
 };
 
+function getProductSeo(pathname: string): SeoConfig | null {
+  const match = pathname.match(/^\/produtos\/\d+(?:\/([^/]+))?\/?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const slug = match[1];
+  const productName = slug
+    ? slug
+        .split("-")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : "Produto artesanal";
+
+  return {
+    title: `${productName} | Sonia Ferraz`,
+    description: `${productName}, peça artesanal feita sob encomenda pela Sonia Ferraz, com cuidado em cada detalhe.`,
+    path: pathname,
+    type: "product",
+  };
+}
+
 function setMeta(name: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute("name", name);
     document.head.appendChild(el);
   }
+
   el.setAttribute("content", content);
 }
 
@@ -82,25 +109,29 @@ function setProperty(property: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(
     `meta[property="${property}"]`,
   );
+
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute("property", property);
     document.head.appendChild(el);
   }
+
   el.setAttribute("content", content);
 }
 
 function setCanonical(url: string) {
   let el = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
   if (!el) {
     el = document.createElement("link");
     el.setAttribute("rel", "canonical");
     document.head.appendChild(el);
   }
+
   el.setAttribute("href", url);
 }
 
-function setStructuredData() {
+function setStructuredData(config: SeoConfig) {
   const id = "sonia-ferraz-structured-data";
   document.getElementById(id)?.remove();
 
@@ -109,13 +140,12 @@ function setStructuredData() {
   script.type = "application/ld+json";
   script.textContent = JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "Store",
-    name: "Sonia Ferraz",
-    url: SITE_URL,
+    "@type": config.type === "product" ? "WebPage" : "Store",
+    name: config.title,
+    url: `${SITE_URL}${config.path}`,
     image: DEFAULT_IMAGE,
     logo: `${SITE_URL}/favicon.svg`,
-    description:
-      "Peças artesanais em patchwork e decoração em tecido feitas sob encomenda.",
+    description: config.description,
     telephone: "+55 54 99178-1286",
     email: "sonia.ferraz28@gmail.com",
     address: {
@@ -134,12 +164,15 @@ export default function SeoManager() {
   const location = useLocation();
 
   useEffect(() => {
-    const config = seoByPath[location.pathname] ?? {
-      title: "Página não encontrada | Sonia Ferraz",
-      description: "A página solicitada não foi encontrada.",
-      path: location.pathname,
-      robots: "noindex, nofollow",
-    };
+    const productSeo = getProductSeo(location.pathname);
+    const config =
+      productSeo ??
+      seoByPath[location.pathname] ?? {
+        title: "Página não encontrada | Sonia Ferraz",
+        description: "A página solicitada não foi encontrada.",
+        path: location.pathname,
+        robots: "noindex, nofollow",
+      };
 
     const canonicalUrl = `${SITE_URL}${config.path}`;
 
@@ -148,7 +181,7 @@ export default function SeoManager() {
     setMeta("robots", config.robots ?? "index, follow, max-image-preview:large");
     setCanonical(canonicalUrl);
 
-    setProperty("og:type", "website");
+    setProperty("og:type", config.type ?? "website");
     setProperty("og:locale", "pt_BR");
     setProperty("og:site_name", "Sonia Ferraz");
     setProperty("og:title", config.title);
@@ -162,7 +195,7 @@ export default function SeoManager() {
     setMeta("twitter:description", config.description);
     setMeta("twitter:image", DEFAULT_IMAGE);
 
-    setStructuredData();
+    setStructuredData(config);
   }, [location.pathname]);
 
   return null;

@@ -25,6 +25,13 @@ import "./home.css";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const PENDING_ACTION_KEY = "patchwork:pending-action";
+const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache";
+const PRODUCTS_CACHE_TIME = 10 * 60 * 1000;
+
+type ProductsCache = {
+  products: Product[];
+  savedAt: number;
+};
 
 function createProductSlug(value: string) {
   return value
@@ -105,8 +112,28 @@ export default function Home() {
     let ativo = true;
 
     async function carregarProdutos() {
+      const cachedValue = sessionStorage.getItem(PRODUCTS_CACHE_KEY);
+
+      if (cachedValue) {
+        try {
+          const cache = JSON.parse(cachedValue) as ProductsCache;
+          const cacheAindaValido =
+            Date.now() - cache.savedAt < PRODUCTS_CACHE_TIME;
+
+          if (cacheAindaValido && Array.isArray(cache.products)) {
+            setProducts(cache.products);
+            setProductsLoading(false);
+            setProductsError("");
+            return;
+          }
+        } catch {
+          sessionStorage.removeItem(PRODUCTS_CACHE_KEY);
+        }
+      }
+
       try {
         setProductsLoading(true);
+
         const response = await fetch(`${API_URL}/produtos`);
         const data = await response.json();
 
@@ -116,9 +143,21 @@ export default function Home() {
           );
         }
 
+        const loadedProducts = Array.isArray(data.produtos)
+          ? data.produtos
+          : [];
+
         if (ativo) {
-          setProducts(Array.isArray(data.produtos) ? data.produtos : []);
+          setProducts(loadedProducts);
           setProductsError("");
+
+          sessionStorage.setItem(
+            PRODUCTS_CACHE_KEY,
+            JSON.stringify({
+              products: loadedProducts,
+              savedAt: Date.now(),
+            }),
+          );
         }
       } catch (error) {
         if (ativo) {
@@ -134,6 +173,7 @@ export default function Home() {
     }
 
     void carregarProdutos();
+
     return () => {
       ativo = false;
     };
