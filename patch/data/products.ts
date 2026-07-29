@@ -3,10 +3,9 @@ export const categories = [
   "Todos",
   "Cozinha",
   "Decoração",
-  "Bolsas",
+  "Frutas e afins",
   "Guirlandas",
   "Páscoa",
   "Natal",
-  "Banheiro",
-  "Panos de prato",
+  "Lavabo",
 ];
