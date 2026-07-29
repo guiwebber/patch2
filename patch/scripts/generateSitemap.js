@@ -1,15 +1,30 @@
 import { createClient } from "@supabase/supabase-js";
-import { writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
+import { loadEnv } from "vite";
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+const env = loadEnv("production", process.cwd(), "");
 
-const { data: produtos } = await supabase
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "Não encontrei VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY no arquivo .env"
+  );
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const { data: produtos, error } = await supabase
   .from("produtos")
   .select("id,nome")
   .eq("ativo", true);
+
+if (error) {
+  console.error("Erro ao buscar produtos:", error.message);
+  process.exit(1);
+}
 
 const urls = [
   {
@@ -43,16 +58,17 @@ const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
   .map(
-    (u) => `
-<url>
-<loc>${u.loc}</loc>
-<changefreq>${u.changefreq}</changefreq>
-<priority>${u.priority}</priority>
-</url>`
+    (url) => `  <url>
+    <loc>${url.loc}</loc>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`
   )
-  .join("")}
-</urlset>`;
+  .join("\n")}
+</urlset>
+`;
 
-writeFileSync("./public/sitemap.xml", xml);
+writeFileSync("./public/sitemap.xml", xml, "utf8");
 
-console.log("Sitemap gerado.");
+console.log(`${produtos?.length ?? 0} produtos encontrados.`);
+console.log("Sitemap gerado em public/sitemap.xml.");
