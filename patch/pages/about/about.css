@@ -15,7 +15,7 @@
   text-align: center;
    background:
     linear-gradient(rgba(66, 47, 34, 0.48), rgba(75, 46, 29, 0.58)),
-    url("../../public/about2.jpeg") center/cover;
+    url("../../public/about2.png") center/cover;
 }
 
 .about-hero-content { max-width: 850px; color: #fff; }
