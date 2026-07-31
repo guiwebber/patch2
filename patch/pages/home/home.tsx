@@ -50,21 +50,21 @@ type PendingAction =
 const heroSlides = [
   {
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+      "../public/home1.jpeg",
     label: "Feito à mão",
     title: "Peças exclusivas",
     description: "Produção artesanal e acabamento delicado.",
   },
   {
     image:
-      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=85",
+      "../public/home1.jpeg",
     label: "Detalhes que encantam",
     title: "Cuidado em cada ponto",
     description: "Tecidos escolhidos com carinho para transformar ambientes.",
   },
   {
     image:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85",
+      "../public/home1.jpeg",
     label: "Arte em tecidos",
     title: "Sua casa mais acolhedora",
     description: "Peças feitas sob encomenda para combinar com o seu estilo.",
