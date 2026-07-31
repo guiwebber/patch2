@@ -15,7 +15,7 @@ export default function About() {
           <span>Sobre o ateliê</span>
 
           <h1>
-            Artesanato que transforma tecido em afeto
+            Artes que transformam tecido em afeto
           </h1>
 
           <p>
