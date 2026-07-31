@@ -50,14 +50,14 @@ type PendingAction =
 const heroSlides = [
   {
     image:
-      "../public/home1.jpeg",
+      "../public/home2.jpeg",
     label: "Feito à mão",
     title: "Peças exclusivas",
     description: "Produção artesanal e acabamento delicado.",
   },
   {
     image:
-      "../public/home1.jpeg",
+      "../public/home3.jpeg",
     label: "Detalhes que encantam",
     title: "Cuidado em cada ponto",
     description: "Tecidos escolhidos com carinho para transformar ambientes.",
