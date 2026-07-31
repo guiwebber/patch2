@@ -2,7 +2,7 @@
 
 .about-page {
   min-height: 100vh;
-  color: #382b24;
+  color: #726158;
   background: #fffaf5;
   font-family: "Montserrat", sans-serif;
 }
@@ -81,7 +81,7 @@
 }
 
 .about-hero-content > span {
-  color: #f5d8ae;
+  color: #d8a45c;
 }
 
 .about-hero h1 {
@@ -90,7 +90,7 @@
   font-size: clamp(42px, 6vw, 70px);
   font-weight: 400;
   line-height: 1.04;
-  color: #1b1213;
+  color: #f5d8ae;
 }
 
 .about-hero p {
