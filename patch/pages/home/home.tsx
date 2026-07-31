@@ -57,14 +57,14 @@ const heroSlides = [
   },
   {
     image:
-      "../public/home3.jpeg",
+      "/home3.jpeg",
     label: "Detalhes que encantam",
     title: "Cuidado em cada ponto",
     description: "Tecidos escolhidos com carinho para transformar ambientes.",
   },
   {
     image:
-      "../public/home1.jpeg",
+      "/home1.jpeg",
     label: "Arte em tecidos",
     title: "Sua casa mais acolhedora",
     description: "Peças feitas sob encomenda para combinar com o seu estilo.",
