@@ -111,7 +111,6 @@ textarea:focus-visible {
 /* Cabeçalhos e textos */
 .hero h1,
 .section-header h2,
-.about-hero h1,
 .about-story-content h2,
 .about-section-header h2,
 .account-heading h1,
@@ -485,12 +484,7 @@ textarea:focus-visible {
 */
 
 /* Sobre */
-.about-hero {
-  background:
-    linear-gradient(rgba(59, 12, 20, 0.66), rgba(59, 12, 20, 0.76)),
-    url("https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1600&q=85")
-      center/cover !important;
-}
+
 
 .about-hero-content > span {
   color: var(--sf-gold-300) !important;
