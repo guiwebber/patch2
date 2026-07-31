@@ -12,14 +12,14 @@ export default function About() {
     <main className="about-page">
       <section className="about-hero">
         <div className="about-hero-content">
-          <span>Sobre a PatchWork</span>
+          <span>Sobre o ateliê</span>
 
           <h1>
             Artesanato que transforma tecido em afeto
           </h1>
 
           <p>
-            A PatchWork nasceu da vontade de criar peças
+            Nosso ateliê nasceu da vontade de criar peças
             que deixem a casa mais acolhedora, bonita e
             cheia de personalidade.
           </p>
@@ -37,7 +37,7 @@ export default function About() {
           <h2>Quem somos</h2>
 
           <p>
-            Somos um pequeno ateliê apaixonado por
+            Somos um ateliê apaixonado por
             patchwork, costura criativa e decoração
             artesanal. Cada produto é planejado com
             atenção, desde a escolha dos tecidos até o

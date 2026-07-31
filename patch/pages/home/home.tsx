@@ -435,8 +435,8 @@ export default function Home() {
           <h1>Peças únicas para deixar sua casa ainda mais bonita</h1>
 
           <p>
-            Conheça nossa coleção de produtos artesanais em patchwork, feitos
-            com cuidado em cada detalhe.
+            Conheça nossa coleção de peças artesanais em patchwork e bordado, feitos
+            com todo amor e cuidado em cada detalhe.
           </p>
 
           <div className="made-to-order-notice">
