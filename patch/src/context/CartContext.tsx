@@ -10,6 +10,7 @@ import {
 import type {
   CartItem,
   Product,
+  ProductVariation,
 } from "../../types/product";
 
 type CartContextData = {
@@ -22,13 +23,28 @@ type CartContextData = {
   maiorAltura: number;
   maiorLargura: number;
   maiorComprimento: number;
+
   addToCart: (
     product: Product,
     quantity?: number,
+    variation?: ProductVariation,
   ) => void;
-  increaseCartQuantity: (productId: number, variationId?: number) => void;
-  decreaseCartQuantity: (productId: number, variationId?: number) => void;
-  removeFromCart: (productId: number, variationId?: number) => void;
+
+  increaseCartQuantity: (
+    productId: number,
+    variationId?: number,
+  ) => void;
+
+  decreaseCartQuantity: (
+    productId: number,
+    variationId?: number,
+  ) => void;
+
+  removeFromCart: (
+    productId: number,
+    variationId?: number,
+  ) => void;
+
   clearCart: () => void;
 };
 
@@ -76,27 +92,29 @@ export function CartProvider({
   function addToCart(
     product: Product,
     quantity = 1,
+    variation?: ProductVariation,
   ) {
     if (quantity < 1) {
       return;
     }
 
-    setCart((currentCart: CartItem[]) => {
+    setCart((currentCart) => {
       const existingItem = currentCart.find(
-        (item: CartItem) =>
-          item.product.id === product.id,
+        (item) =>
+          item.product.id === product.id &&
+          item.variation?.id === variation?.id,
       );
 
       if (existingItem) {
-        return currentCart.map(
-          (item: CartItem) =>
-            item.product.id === product.id
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity + quantity,
-                }
-              : item,
+        return currentCart.map((item) =>
+          item.product.id === product.id &&
+          item.variation?.id === variation?.id
+            ? {
+                ...item,
+                quantity:
+                  item.quantity + quantity,
+              }
+            : item,
         );
       }
 
@@ -105,15 +123,20 @@ export function CartProvider({
         {
           product,
           quantity,
+          variation,
         },
       ];
     });
   }
 
-  function increaseCartQuantity(productId: number, variationId?: number) {
-    setCart((currentCart: CartItem[]) =>
-      currentCart.map((item: CartItem) =>
-        item.product.id === productId
+  function increaseCartQuantity(
+    productId: number,
+    variationId?: number,
+  ) {
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        item.product.id === productId &&
+        item.variation?.id === variationId
           ? {
               ...item,
               quantity: item.quantity + 1,
@@ -123,29 +146,41 @@ export function CartProvider({
     );
   }
 
-  function decreaseCartQuantity(productId: number, variationId?: number) {
-    setCart((currentCart: CartItem[]) =>
+  function decreaseCartQuantity(
+    productId: number,
+    variationId?: number,
+  ) {
+    setCart((currentCart) =>
       currentCart
-        .map((item: CartItem) =>
-          item.product.id === productId
+        .map((item) =>
+          item.product.id === productId &&
+          item.variation?.id === variationId
             ? {
                 ...item,
-                quantity: item.quantity - 1,
+                quantity:
+                  item.quantity - 1,
               }
             : item,
         )
         .filter(
-          (item: CartItem) =>
-            item.quantity > 0,
+          (item) => item.quantity > 0,
         ),
     );
   }
 
-  function removeFromCart(productId: number, variationId?: number) {
-    setCart((currentCart: CartItem[]) =>
+  function removeFromCart(
+    productId: number,
+    variationId?: number,
+  ) {
+    setCart((currentCart) =>
       currentCart.filter(
-        (item: CartItem) =>
-          item.product.id !== productId,
+        (item) =>
+          !(
+            item.product.id ===
+              productId &&
+            item.variation?.id ===
+              variationId
+          ),
       ),
     );
   }
@@ -157,7 +192,7 @@ export function CartProvider({
   const cartQuantity = useMemo(
     () =>
       cart.reduce(
-        (total: number, item: CartItem) =>
+        (total, item) =>
           total + item.quantity,
         0,
       ),
@@ -167,9 +202,10 @@ export function CartProvider({
   const cartTotal = useMemo(
     () =>
       cart.reduce(
-        (total: number, item: CartItem) =>
+        (total, item) =>
           total +
-          item.product.price * item.quantity,
+          item.product.price *
+            item.quantity,
         0,
       ),
     [cart],
@@ -181,8 +217,9 @@ export function CartProvider({
         ? 0
         : Math.max(
             ...cart.map(
-              (item: CartItem) =>
-                item.product.producaoMinDias,
+              (item) =>
+                item.product
+                  .producaoMinDias,
             ),
           ),
     [cart],
@@ -194,8 +231,9 @@ export function CartProvider({
         ? 0
         : Math.max(
             ...cart.map(
-              (item: CartItem) =>
-                item.product.producaoMaxDias,
+              (item) =>
+                item.product
+                  .producaoMaxDias,
             ),
           ),
     [cart],
@@ -204,9 +242,10 @@ export function CartProvider({
   const pesoTotal = useMemo(
     () =>
       cart.reduce(
-        (total: number, item: CartItem) =>
+        (total, item) =>
           total +
-          item.product.peso * item.quantity,
+          item.product.peso *
+            item.quantity,
         0,
       ),
     [cart],
@@ -218,7 +257,7 @@ export function CartProvider({
         ? 0
         : Math.max(
             ...cart.map(
-              (item: CartItem) =>
+              (item) =>
                 item.product.altura,
             ),
           ),
@@ -231,25 +270,27 @@ export function CartProvider({
         ? 0
         : Math.max(
             ...cart.map(
-              (item: CartItem) =>
+              (item) =>
                 item.product.largura,
             ),
           ),
     [cart],
   );
 
-  const maiorComprimento = useMemo(
-    () =>
-      cart.length === 0
-        ? 0
-        : Math.max(
-            ...cart.map(
-              (item: CartItem) =>
-                item.product.comprimento,
+  const maiorComprimento =
+    useMemo(
+      () =>
+        cart.length === 0
+          ? 0
+          : Math.max(
+              ...cart.map(
+                (item) =>
+                  item.product
+                    .comprimento,
+              ),
             ),
-          ),
-    [cart],
-  );
+      [cart],
+    );
 
   const value = useMemo(
     () => ({
@@ -289,7 +330,8 @@ export function CartProvider({
 }
 
 export function useCart() {
-  const context = useContext(CartContext);
+  const context =
+    useContext(CartContext);
 
   if (!context) {
     throw new Error(

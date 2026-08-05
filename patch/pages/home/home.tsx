@@ -1120,7 +1120,7 @@ export default function Home() {
                     className="checkout-button"
                     onClick={finalizarCompra}
                   >
-                    Finalizar compra
+                    Finalizar compra 
                   </button>
                 </div>
               </>
