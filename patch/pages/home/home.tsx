@@ -28,7 +28,7 @@ import "./home.css";
 
 
 const PENDING_ACTION_KEY = "patchwork:pending-action";
-const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache-v3";
+const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache-v4";
 const PRODUCTS_CACHE_TIME = 10 * 60 * 1000;
 
 type ProductsCache = {
@@ -251,21 +251,12 @@ export default function Home() {
       return;
     }
 
-    setSelectedProduct((currentProduct) => {
-      if (currentProduct?.id === productFromUrl.id) {
-        return currentProduct;
-      }
-
-      return productFromUrl;
-    });
+   setSelectedProduct(productFromUrl);
 
     setModalQuantity(1);
     setModalImageIndex(0);
-    setSelectedVariation(
-      productFromUrl.hasVariations
-        ? productFromUrl.variations?.[0] || null
-        : null,
-    );
+    // O modal começa pela galeria geral. A opção é escolhida separadamente.
+    setSelectedVariation(null);
     setVariationError("");
   }, [navigate, productId, products, productsError, productsLoading]);
 
@@ -332,6 +323,23 @@ export default function Home() {
     });
   }, [products, search, selectedCategory]);
 
+  const modalImages = useMemo(() => {
+    if (!selectedProduct) {
+      return [];
+    }
+
+    const productImages = [
+      selectedProduct.image,
+      ...(selectedProduct.images ?? []),
+    ].filter((image): image is string => Boolean(image));
+
+    const variationImages = (selectedProduct.variations ?? [])
+      .map((variation) => variation.image)
+      .filter((image): image is string => Boolean(image));
+
+    return [...new Set([...productImages, ...variationImages])];
+  }, [selectedProduct]);
+
   function resetProductModal() {
     setSelectedProduct(null);
     setModalQuantity(1);
@@ -344,11 +352,8 @@ export default function Home() {
     setSelectedProduct(product);
     setModalQuantity(1);
     setModalImageIndex(0);
-    setSelectedVariation(
-      product.hasVariations
-        ? product.variations?.[0] || null
-        : null,
-    );
+    // Mantém a foto geral visível até o cliente escolher uma opção.
+    setSelectedVariation(null);
     setVariationError("");
 
     const slug = createProductSlug(product.name);
@@ -387,20 +392,18 @@ export default function Home() {
   }
 
   function changeModalImage(direction: "previous" | "next") {
-    if (!selectedProduct) {
+    if (modalImages.length === 0) {
       return;
     }
 
-    const images = selectedProduct.images?.length
-      ? selectedProduct.images
-      : [selectedProduct.image];
-
     setModalImageIndex((current) => {
       if (direction === "previous") {
-        return current === 0 ? images.length - 1 : current - 1;
+        return current === 0
+          ? modalImages.length - 1
+          : current - 1;
       }
 
-      return (current + 1) % images.length;
+      return (current + 1) % modalImages.length;
     });
   }
 
@@ -434,7 +437,7 @@ export default function Home() {
     quantity = 1,
     variation?: ProductVariation | null,
   ) {
-    if (product.hasVariations && !variation) {
+    if ((product.variations?.length || 0) > 0 && !variation) {
       setVariationError("Escolha uma opção antes de adicionar ao carrinho.");
       if (!selectedProduct) {
         openProduct(product);
@@ -784,16 +787,15 @@ export default function Home() {
             <div className="modal-gallery">
               <div className="modal-main-image">
                 <img
-                  key={modalImageIndex}
+                  key={modalImages[modalImageIndex] || selectedProduct.image}
                   src={
-                    selectedVariation?.image ||
-                    selectedProduct.images?.[modalImageIndex] ||
+                    modalImages[modalImageIndex] ||
                     selectedProduct.image
                   }
                   alt={`${selectedProduct.name} - foto ${modalImageIndex + 1}`}
                 />
 
-                {!selectedVariation && (selectedProduct.images?.length || 1) > 1 && (
+                {modalImages.length > 1 && (
                   <>
                     <button
                       type="button"
@@ -814,19 +816,14 @@ export default function Home() {
                     </button>
 
                     <span className="gallery-counter">
-                      {modalImageIndex + 1}/{selectedProduct.images?.length}
+                      {modalImageIndex + 1}/{modalImages.length}
                     </span>
                   </>
                 )}
               </div>
 
               <div className="modal-thumbnails">
-                {(selectedVariation
-                  ? [selectedVariation.image]
-                  : selectedProduct.images?.length
-                    ? selectedProduct.images
-                    : [selectedProduct.image]
-                ).map((image, index) => (
+                {modalImages.map((image, index) => (
                   <button
                     type="button"
                     key={`${image}-${index}`}
@@ -837,6 +834,11 @@ export default function Home() {
                     }
                     onClick={() => setModalImageIndex(index)}
                     aria-label={`Selecionar foto ${index + 1}`}
+                    title={
+                      selectedProduct.variations?.find(
+                        (variation) => variation.image === image,
+                      )?.name || `Foto geral ${index + 1}`
+                    }
                   >
                     <img src={image} alt="" />
                   </button>
@@ -904,8 +906,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {selectedProduct.hasVariations &&
-                (selectedProduct.variations?.length || 0) > 0 && (
+              {(selectedProduct.variations?.length || 0) > 0 && (
                   <div className="product-variations">
                     <div className="product-variations-heading">
                       <strong>Escolha uma opção</strong>
@@ -927,7 +928,14 @@ export default function Home() {
                           onClick={() => {
                             setSelectedVariation(variation);
                             setVariationError("");
-                            setModalImageIndex(0);
+
+                            const imageIndex = modalImages.findIndex(
+                              (image) => image === variation.image,
+                            );
+
+                            setModalImageIndex(
+                              imageIndex >= 0 ? imageIndex : 0,
+                            );
                           }}
                         >
                           <img src={variation.image} alt={variation.name} />
