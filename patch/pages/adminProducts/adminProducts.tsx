@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Eye, EyeOff, ImagePlus, LoaderCircle, Pencil, Plus, Save, Star, Trash2, Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../src/context/AuthContext";
-import type { Product } from "../../types/product";
+import type {
+  Product,
+  ProductVariation,
+} from "../../types/product";
 import "./adminProducts.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
@@ -17,10 +20,21 @@ const CATEGORIAS_PADRAO = [
   "Lavabo",
 ];
 
+type VariationForm = {
+  localId: string;
+  nome: string;
+  imagem: string;
+  corHex: string;
+  ordem: number;
+  ativo: boolean;
+};
+
 type FormState = {
   nome: string; categoria: string; descricao: string;
   preco: string; precoAntigo: string; imagem: string; imagensTexto: string;
   destaque: boolean; ativo: boolean;
+  possuiVariacoes: boolean;
+  variacoes: VariationForm[];
   peso: string; altura: string; largura: string; comprimento: string;
   producaoMinDias: string; producaoMaxDias: string;
 };
@@ -28,6 +42,7 @@ type FormState = {
 const vazio: FormState = {
   nome: "", categoria: "", descricao: "", preco: "", precoAntigo: "",
   imagem: "", imagensTexto: "", destaque: false, ativo: true,
+  possuiVariacoes: false, variacoes: [],
   peso: "", altura: "", largura: "", comprimento: "",
   producaoMinDias: "", producaoMaxDias: "",
 };
@@ -44,6 +59,7 @@ export default function AdminProducts() {
   const [enviandoImagens, setEnviandoImagens] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [erroModal, setErroModal] = useState("");
 
   const headers = useMemo(() => ({
     "Content-Type": "application/json",
@@ -84,7 +100,7 @@ export default function AdminProducts() {
   useEffect(() => { void carregar(); }, [carregar]);
 
   function abrirNovo() {
-    setEditandoId(null); setForm(vazio); setErro(""); setMensagem(""); setModalAberto(true);
+    setEditandoId(null); setForm(vazio); setErro(""); setErroModal(""); setMensagem(""); setModalAberto(true);
   }
 
   function abrirEdicao(produto: Product) {
@@ -94,12 +110,21 @@ export default function AdminProducts() {
       preco: String(produto.price), precoAntigo: produto.oldPrice ? String(produto.oldPrice) : "",
       imagem: produto.image, imagensTexto: (produto.images || []).join("\n"),
       destaque: Boolean(produto.featured), ativo: produto.active !== false,
+      possuiVariacoes: Boolean(produto.hasVariations),
+      variacoes: (produto.variations || []).map((variacao: ProductVariation) => ({
+        localId: String(variacao.id),
+        nome: variacao.name,
+        imagem: variacao.image,
+        corHex: variacao.colorHex || "",
+        ordem: variacao.order,
+        ativo: variacao.active,
+      })),
       peso: String(produto.peso), altura: String(produto.altura),
       largura: String(produto.largura), comprimento: String(produto.comprimento),
       producaoMinDias: String(produto.producaoMinDias),
       producaoMaxDias: String(produto.producaoMaxDias),
     });
-    setErro(""); setMensagem(""); setModalAberto(true);
+    setErro(""); setErroModal(""); setMensagem(""); setModalAberto(true);
   }
 
   function obterImagensFormulario() {
@@ -236,10 +261,101 @@ export default function AdminProducts() {
           "Imagens enviadas com sucesso.",
       );
     } catch (error) {
-      setErro(
+      setErroModal(
         error instanceof Error
           ? error.message
           : "Erro ao enviar as imagens.",
+      );
+    } finally {
+      setEnviandoImagens(false);
+    }
+  }
+
+  function adicionarVariacao() {
+    setForm((atual) => ({
+      ...atual,
+      variacoes: [
+        ...atual.variacoes,
+        {
+          localId: crypto.randomUUID(),
+          nome: "",
+          imagem: "",
+          corHex: "",
+          ordem: atual.variacoes.length,
+          ativo: true,
+        },
+      ],
+    }));
+  }
+
+  function atualizarVariacao(
+    localId: string,
+    dados: Partial<VariationForm>,
+  ) {
+    setForm((atual) => ({
+      ...atual,
+      variacoes: atual.variacoes.map((variacao) =>
+        variacao.localId === localId
+          ? { ...variacao, ...dados }
+          : variacao,
+      ),
+    }));
+  }
+
+  function removerVariacao(localId: string) {
+    setForm((atual) => ({
+      ...atual,
+      variacoes: atual.variacoes
+        .filter((variacao) => variacao.localId !== localId)
+        .map((variacao, ordem) => ({ ...variacao, ordem })),
+    }));
+  }
+
+  async function selecionarImagemVariacao(
+    localId: string,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const arquivo = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!arquivo) return;
+
+    const dados = new FormData();
+    dados.append("imagens", arquivo);
+
+    try {
+      setEnviandoImagens(true);
+      setErro("");
+
+      const response = await fetch(
+        `${API_URL}/admin/produtos/imagens`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: dados,
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.erro || "Não foi possível enviar a imagem.");
+      }
+
+      const url = Array.isArray(data.urls) ? data.urls[0] : "";
+
+      if (!url) {
+        throw new Error("O servidor não retornou a URL da imagem.");
+      }
+
+      atualizarVariacao(localId, { imagem: url });
+    } catch (error) {
+      setErroModal(
+        error instanceof Error
+          ? error.message
+          : "Erro ao enviar a imagem da opção.",
       );
     } finally {
       setEnviandoImagens(false);
@@ -252,6 +368,16 @@ export default function AdminProducts() {
       preco: Number(form.preco),
       precoAntigo: form.precoAntigo ? Number(form.precoAntigo) : null,
       imagens: obterImagensFormulario(),
+      possuiVariacoes: form.possuiVariacoes,
+      variacoes: form.possuiVariacoes
+        ? form.variacoes.map((variacao, ordem) => ({
+            nome: variacao.nome.trim(),
+            imagem: variacao.imagem.trim(),
+            corHex: variacao.corHex.trim() || null,
+            ordem,
+            ativo: variacao.ativo,
+          }))
+        : [],
       peso: Number(form.peso), altura: Number(form.altura),
       largura: Number(form.largura), comprimento: Number(form.comprimento),
       producaoMinDias: Number(form.producaoMinDias),
@@ -261,18 +387,70 @@ export default function AdminProducts() {
 
   async function salvar(event: React.FormEvent) {
     event.preventDefault();
+
+    setErroModal("");
+
+    if (form.possuiVariacoes) {
+      if (form.variacoes.length === 0) {
+        setErroModal("Adicione pelo menos uma opção ao produto.");
+        return;
+      }
+
+      const opcaoIncompleta = form.variacoes.find(
+        (variacao) => !variacao.nome.trim() || !variacao.imagem.trim(),
+      );
+
+      if (opcaoIncompleta) {
+        setErroModal(
+          "Preencha o nome e envie uma foto para todas as opções.",
+        );
+        return;
+      }
+    }
+
     try {
-      setSalvando(true); setErro("");
-      const url = editandoId ? `${API_URL}/admin/produtos/${editandoId}` : `${API_URL}/admin/produtos`;
+      setSalvando(true);
+
+      const url = editandoId
+        ? `${API_URL}/admin/produtos/${editandoId}`
+        : `${API_URL}/admin/produtos`;
+
       const response = await fetch(url, {
-        method: editandoId ? "PUT" : "POST", headers, body: JSON.stringify(payload()),
+        method: editandoId ? "PUT" : "POST",
+        headers,
+        body: JSON.stringify(payload()),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.erro || "Não foi possível salvar.");
-      setMensagem(data.mensagem); setModalAberto(false); await carregar();
+
+      const textoResposta = await response.text();
+      let data: { erro?: string; detalhes?: string; mensagem?: string } = {};
+
+      try {
+        data = textoResposta ? JSON.parse(textoResposta) : {};
+      } catch {
+        data = { erro: textoResposta || "Resposta inválida do servidor." };
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.detalhes
+            ? `${data.erro || "Não foi possível salvar."} ${data.detalhes}`
+            : data.erro || "Não foi possível salvar.",
+        );
+      }
+
+      sessionStorage.removeItem("sonia-ferraz:products-cache-v2");
+      setMensagem(data.mensagem || "Produto salvo com sucesso.");
+      setModalAberto(false);
+      await carregar();
     } catch (error) {
-      setErro(error instanceof Error ? error.message : "Erro ao salvar produto.");
-    } finally { setSalvando(false); }
+      setErroModal(
+        error instanceof Error
+          ? error.message
+          : "Erro ao salvar produto.",
+      );
+    } finally {
+      setSalvando(false);
+    }
   }
 
   async function alternarAtivo(produto: Product) {
@@ -321,6 +499,9 @@ export default function AdminProducts() {
                   {produto.featured && <span>Destaque</span>}
                   {produto.oldPrice && <span>Oferta</span>}
                   {produto.active === false && <span>Oculto</span>}
+                  {produto.hasVariations && (
+                    <span>{produto.variations?.length || 0} opções</span>
+                  )}
                 </div>
                 <h2>{produto.name}</h2>
                 <strong>{produto.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
@@ -339,8 +520,14 @@ export default function AdminProducts() {
       {modalAberto && (
         <div className="products-admin-overlay" onMouseDown={() => setModalAberto(false)}>
           <form className="products-admin-modal" onSubmit={salvar} onMouseDown={(e) => e.stopPropagation()}>
-            <button type="button" className="products-admin-close" onClick={() => setModalAberto(false)}><X/></button>
+            <button type="button" className="products-admin-close" onClick={() => { setErroModal(""); setModalAberto(false); }}><X/></button>
             <h2>{editandoId ? "Editar produto" : "Cadastrar produto"}</h2>
+
+            {erroModal && (
+              <div className="products-admin-modal-alert" role="alert">
+                {erroModal}
+              </div>
+            )}
             <div className="products-admin-form-grid">
               <label><span>Nome</span><input required value={form.nome} onChange={(e) => setForm({...form,nome:e.target.value})}/></label>
               <label>
@@ -513,6 +700,129 @@ export default function AdminProducts() {
                   </label>
                 </details>
               </section>
+              <section className="products-admin-variations full">
+                <label className="products-admin-variation-toggle">
+                  <input
+                    type="checkbox"
+                    checked={form.possuiVariacoes}
+                    onChange={(event) =>
+                      setForm((atual) => ({
+                        ...atual,
+                        possuiVariacoes: event.target.checked,
+                        variacoes:
+                          event.target.checked && atual.variacoes.length === 0
+                            ? [{
+                                localId: crypto.randomUUID(),
+                                nome: "",
+                                imagem: "",
+                                corHex: "",
+                                ordem: 0,
+                                ativo: true,
+                              }]
+                            : atual.variacoes,
+                      }))
+                    }
+                  />
+
+                  <span>
+                    <strong>Este produto possui opções</strong>
+                    <small>
+                      Use para cores, estampas ou modelos com fotos diferentes.
+                    </small>
+                  </span>
+                </label>
+
+                {form.possuiVariacoes && (
+                  <div className="products-admin-variation-list">
+                    {form.variacoes.map((variacao, index) => (
+                      <article
+                        className="products-admin-variation-card"
+                        key={variacao.localId}
+                      >
+                        <div className="products-admin-variation-number">
+                          Opção {index + 1}
+                        </div>
+
+                        <label>
+                          <span>Nome da opção</span>
+                          <input
+                            required
+                            value={variacao.nome}
+                            placeholder="Ex.: Laranja xadrez"
+                            onChange={(event) =>
+                              atualizarVariacao(variacao.localId, {
+                                nome: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          <span>Cor de apoio (opcional)</span>
+                          <input
+                            type="color"
+                            value={variacao.corHex || "#7f1d33"}
+                            onChange={(event) =>
+                              atualizarVariacao(variacao.localId, {
+                                corHex: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+
+                        <div className="products-admin-variation-image">
+                          {variacao.imagem ? (
+                            <img
+                              src={variacao.imagem}
+                              alt={variacao.nome || `Opção ${index + 1}`}
+                            />
+                          ) : (
+                            <div>
+                              <ImagePlus size={28} />
+                              <span>Sem foto</span>
+                            </div>
+                          )}
+
+                          <label className="products-admin-upload">
+                            <Upload size={17} />
+                            {variacao.imagem ? "Trocar foto" : "Enviar foto"}
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                              disabled={enviandoImagens}
+                              onChange={(event) =>
+                                void selecionarImagemVariacao(
+                                  variacao.localId,
+                                  event,
+                                )
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="products-admin-remove-variation"
+                          onClick={() => removerVariacao(variacao.localId)}
+                        >
+                          <Trash2 size={16} />
+                          Remover opção
+                        </button>
+                      </article>
+                    ))}
+
+                    <button
+                      type="button"
+                      className="products-admin-add-variation"
+                      onClick={adicionarVariacao}
+                    >
+                      <Plus size={17} />
+                      Adicionar outra opção
+                    </button>
+                  </div>
+                )}
+              </section>
+
               <label><span>Peso (kg)</span><input required type="number" min="0.001" step="0.001" value={form.peso} onChange={(e) => setForm({...form,peso:e.target.value})}/></label>
               <label><span>Altura (cm)</span><input required type="number" min="1" step="0.1" value={form.altura} onChange={(e) => setForm({...form,altura:e.target.value})}/></label>
               <label><span>Largura (cm)</span><input required type="number" min="1" step="0.1" value={form.largura} onChange={(e) => setForm({...form,largura:e.target.value})}/></label>

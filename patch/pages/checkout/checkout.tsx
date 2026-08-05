@@ -407,6 +407,8 @@ export default function Checkout() {
               (item) => ({
                 produtoId:
                   item.product.id,
+                variacaoId:
+                  item.variation?.id,
                 quantidade:
                   item.quantity,
               }),

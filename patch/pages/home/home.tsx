@@ -18,7 +18,10 @@ import { useAuth } from "../../src/context/AuthContext";
 import { useCart } from "../../src/context/CartContext";
 import { useStore } from "../../src/context/StoreContext";
 import { categories } from "../../data/products";
-import type { Product } from "../../types/product";
+import type {
+  Product,
+  ProductVariation,
+} from "../../types/product";
 import { supabase } from "../../src/lib/supabase";
 
 import "./home.css";
@@ -45,7 +48,12 @@ function createProductSlug(value: string) {
 
 type PendingAction =
   | { type: "favorite"; product: Product }
-  | { type: "cart"; product: Product; quantity: number };
+  | {
+      type: "cart";
+      product: Product;
+      quantity: number;
+      variation?: ProductVariation;
+    };
 
 const heroSlides = [
   {
@@ -101,6 +109,9 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalQuantity, setModalQuantity] = useState(1);
+  const [selectedVariation, setSelectedVariation] =
+    useState<ProductVariation | null>(null);
+  const [variationError, setVariationError] = useState("");
 
   const [modalImageIndex, setModalImageIndex] = useState(0);
 
@@ -137,7 +148,7 @@ export default function Home() {
         const { data, error } = await supabase
           .from("produtos")
           .select(
-            "id,nome,categoria,descricao,preco,preco_antigo,imagem,imagens,destaque,ativo,peso,altura,largura,comprimento,producao_min_dias,producao_max_dias",
+            "id,nome,categoria,descricao,preco,preco_antigo,imagem,imagens,destaque,ativo,possui_variacoes,peso,altura,largura,comprimento,producao_min_dias,producao_max_dias,produto_variacoes(id,produto_id,nome,imagem,cor_hex,ordem,ativo)",
           )
           .eq("ativo", true)
           .order("id", { ascending: true });
@@ -164,6 +175,21 @@ export default function Home() {
             : [],
           featured: Boolean(produto.destaque),
           active: Boolean(produto.ativo),
+          hasVariations: Boolean(produto.possui_variacoes),
+          variations: Array.isArray(produto.produto_variacoes)
+            ? produto.produto_variacoes
+                .filter((variacao) => variacao.ativo !== false)
+                .sort((a, b) => Number(a.ordem ?? 0) - Number(b.ordem ?? 0))
+                .map((variacao) => ({
+                  id: Number(variacao.id),
+                  productId: Number(variacao.produto_id),
+                  name: variacao.nome ?? "Variação",
+                  image: variacao.imagem ?? "",
+                  colorHex: variacao.cor_hex || undefined,
+                  order: Number(variacao.ordem ?? 0),
+                  active: Boolean(variacao.ativo),
+                }))
+            : [],
           peso: Number(produto.peso ?? 0),
           altura: Number(produto.altura ?? 0),
           largura: Number(produto.largura ?? 0),
@@ -235,6 +261,12 @@ export default function Home() {
 
     setModalQuantity(1);
     setModalImageIndex(0);
+    setSelectedVariation(
+      productFromUrl.hasVariations
+        ? productFromUrl.variations?.[0] || null
+        : null,
+    );
+    setVariationError("");
   }, [navigate, productId, products, productsError, productsLoading]);
 
   useEffect(() => {
@@ -277,7 +309,7 @@ export default function Home() {
       }
 
       if (pending.type === "cart") {
-        addToCart(pending.product, pending.quantity);
+        addToCart(pending.product, pending.quantity, pending.variation);
         setCartOpen(true);
       }
     } catch (error) {
@@ -304,12 +336,20 @@ export default function Home() {
     setSelectedProduct(null);
     setModalQuantity(1);
     setModalImageIndex(0);
+    setSelectedVariation(null);
+    setVariationError("");
   }
 
   function openProduct(product: Product) {
     setSelectedProduct(product);
     setModalQuantity(1);
     setModalImageIndex(0);
+    setSelectedVariation(
+      product.hasVariations
+        ? product.variations?.[0] || null
+        : null,
+    );
+    setVariationError("");
 
     const slug = createProductSlug(product.name);
 
@@ -389,17 +429,30 @@ export default function Home() {
     toggleFavorite(product);
   }
 
-  function handleAddToCart(product: Product, quantity = 1) {
+  function handleAddToCart(
+    product: Product,
+    quantity = 1,
+    variation?: ProductVariation | null,
+  ) {
+    if (product.hasVariations && !variation) {
+      setVariationError("Escolha uma opção antes de adicionar ao carrinho.");
+      if (!selectedProduct) {
+        openProduct(product);
+      }
+      return;
+    }
+
     if (!estaLogado) {
       irParaLoginComAcao({
         type: "cart",
         product,
         quantity,
+        variation: variation || undefined,
       });
       return;
     }
 
-    addToCart(product, quantity);
+    addToCart(product, quantity, variation || undefined);
     closeProduct();
     setCartOpen(true);
   }
@@ -681,6 +734,11 @@ export default function Home() {
                         className="details-button"
                         onClick={(event) => {
                           event.stopPropagation();
+                          if (product.hasVariations) {
+                            openProduct(product);
+                            return;
+                          }
+
                           handleAddToCart(product);
                         }}
                       >
@@ -728,13 +786,14 @@ export default function Home() {
                 <img
                   key={modalImageIndex}
                   src={
+                    selectedVariation?.image ||
                     selectedProduct.images?.[modalImageIndex] ||
                     selectedProduct.image
                   }
                   alt={`${selectedProduct.name} - foto ${modalImageIndex + 1}`}
                 />
 
-                {(selectedProduct.images?.length || 1) > 1 && (
+                {!selectedVariation && (selectedProduct.images?.length || 1) > 1 && (
                   <>
                     <button
                       type="button"
@@ -762,9 +821,11 @@ export default function Home() {
               </div>
 
               <div className="modal-thumbnails">
-                {(selectedProduct.images?.length
-                  ? selectedProduct.images
-                  : [selectedProduct.image]
+                {(selectedVariation
+                  ? [selectedVariation.image]
+                  : selectedProduct.images?.length
+                    ? selectedProduct.images
+                    : [selectedProduct.image]
                 ).map((image, index) => (
                   <button
                     type="button"
@@ -843,6 +904,46 @@ export default function Home() {
                 </div>
               </div>
 
+              {selectedProduct.hasVariations &&
+                (selectedProduct.variations?.length || 0) > 0 && (
+                  <div className="product-variations">
+                    <div className="product-variations-heading">
+                      <strong>Escolha uma opção</strong>
+                      {selectedVariation && (
+                        <span>{selectedVariation.name}</span>
+                      )}
+                    </div>
+
+                    <div className="product-variation-options">
+                      {selectedProduct.variations?.map((variation) => (
+                        <button
+                          key={variation.id}
+                          type="button"
+                          className={
+                            selectedVariation?.id === variation.id
+                              ? "product-variation-option active"
+                              : "product-variation-option"
+                          }
+                          onClick={() => {
+                            setSelectedVariation(variation);
+                            setVariationError("");
+                            setModalImageIndex(0);
+                          }}
+                        >
+                          <img src={variation.image} alt={variation.name} />
+                          <span>{variation.name}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {variationError && (
+                      <small className="product-variation-error">
+                        {variationError}
+                      </small>
+                    )}
+                  </div>
+                )}
+
               <div className="quantity-area">
                 <span>Quantidade</span>
 
@@ -870,7 +971,13 @@ export default function Home() {
               <button
                 type="button"
                 className="modal-cart-button"
-                onClick={() => handleAddToCart(selectedProduct, modalQuantity)}
+                onClick={() =>
+                  handleAddToCart(
+                    selectedProduct,
+                    modalQuantity,
+                    selectedVariation,
+                  )
+                }
               >
                 <ShoppingCart size={21} />
 
@@ -925,8 +1032,18 @@ export default function Home() {
               <>
                 <div className="cart-items">
                   {cart.map((item) => (
-                    <article className="cart-item" key={item.product.id}>
-                      <img src={item.product.image} alt={item.product.name} />
+                    <article
+                      className="cart-item"
+                      key={`${item.product.id}-${item.variation?.id ?? "padrao"}`}
+                    >
+                      <img
+                        src={item.variation?.image || item.product.image}
+                        alt={
+                          item.variation
+                            ? `${item.product.name} - ${item.variation.name}`
+                            : item.product.name
+                        }
+                      />
 
                       <div className="cart-item-content">
                         <div className="cart-item-header">
@@ -934,6 +1051,12 @@ export default function Home() {
                             <span>{item.product.category}</span>
 
                             <h3>{item.product.name}</h3>
+
+                            {item.variation && (
+                              <small className="cart-variation-name">
+                                Opção: {item.variation.name}
+                              </small>
+                            )}
 
                             <small className="cart-production-time">
                               Produção: {item.product.producaoMinDias} a{" "}
@@ -944,7 +1067,7 @@ export default function Home() {
                           <button
                             type="button"
                             className="remove-button"
-                            onClick={() => removeFromCart(item.product.id)}
+                            onClick={() => removeFromCart(item.product.id, item.variation?.id)}
                             aria-label={`Remover ${item.product.name}`}
                           >
                             <Trash2 size={19} />
@@ -956,7 +1079,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() =>
-                                decreaseCartQuantity(item.product.id)
+                                decreaseCartQuantity(item.product.id, item.variation?.id)
                               }
                             >
                               <Minus size={16} />
@@ -967,7 +1090,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() =>
-                                increaseCartQuantity(item.product.id)
+                                increaseCartQuantity(item.product.id, item.variation?.id)
                               }
                             >
                               <Plus size={16} />

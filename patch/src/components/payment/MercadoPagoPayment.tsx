@@ -76,6 +76,7 @@ type CardFormData = {
 function itensDoCarrinho(cart: CartItem[]) {
   return cart.map((item: CartItem) => ({
     produtoId: item.product.id,
+    variacaoId: item.variation?.id,
     quantidade: item.quantity,
   }));
 }

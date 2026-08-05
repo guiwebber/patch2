@@ -24,7 +24,12 @@ function validarItens(itens) {
         Number.isInteger(Number(item.produtoId)) &&
         Number.isInteger(Number(item.quantidade)) &&
         Number(item.quantidade) > 0 &&
-        Number(item.quantidade) <= 50,
+        Number(item.quantidade) <= 50 &&
+        (
+          item.variacaoId === undefined ||
+          item.variacaoId === null ||
+          Number.isInteger(Number(item.variacaoId))
+        ),
     )
   );
 }
@@ -40,6 +45,39 @@ async function montarItensConfiaveis(itensRecebidos) {
 
   const mapa = new Map(produtos.map((produto) => [produto.id, produto]));
 
+  const variacaoIds = [
+    ...new Set(
+      itensRecebidos
+        .map((item) => Number(item.variacaoId))
+        .filter(Number.isInteger),
+    ),
+  ];
+
+  let variacoesPorId = new Map();
+
+  if (variacaoIds.length > 0) {
+    const variacoesResult = await pool.query(
+      `
+        SELECT id, produto_id, nome, imagem
+        FROM produto_variacoes
+        WHERE id = ANY($1::bigint[])
+          AND ativo = TRUE
+      `,
+      [variacaoIds],
+    );
+
+    variacoesPorId = new Map(
+      variacoesResult.rows.map((variacao) => [
+        Number(variacao.id),
+        {
+          ...variacao,
+          id: Number(variacao.id),
+          produto_id: Number(variacao.produto_id),
+        },
+      ]),
+    );
+  }
+
   return itensRecebidos.map((item) => {
     const produto = mapa.get(Number(item.produtoId));
 
@@ -48,9 +86,44 @@ async function montarItensConfiaveis(itensRecebidos) {
     }
 
     const quantidade = Number(item.quantidade);
+    const variacaoId =
+      item.variacaoId === undefined || item.variacaoId === null
+        ? null
+        : Number(item.variacaoId);
+
+    let variacao = null;
+
+    if (produto.possuiVariacoes) {
+      if (!Number.isInteger(variacaoId)) {
+        throw new Error(
+          `Selecione uma opção válida para o produto ${produto.nome}.`,
+        );
+      }
+
+      variacao = variacoesPorId.get(variacaoId);
+
+      if (!variacao || variacao.produto_id !== produto.id) {
+        throw new Error(
+          `A opção selecionada não pertence ao produto ${produto.nome}.`,
+        );
+      }
+    } else if (variacaoId !== null) {
+      throw new Error(
+        `O produto ${produto.nome} não possui opções.`,
+      );
+    }
+
     const subtotal = moeda(produto.preco * quantidade);
 
-    return { ...produto, quantidade, subtotal };
+    return {
+      ...produto,
+      quantidade,
+      subtotal,
+      variacaoId: variacao?.id || null,
+      variacaoNome: variacao?.nome || null,
+      variacaoImagem: variacao?.imagem || null,
+      imagem: variacao?.imagem || produto.imagem,
+    };
   });
 }
 
@@ -241,11 +314,15 @@ async function criarPedidoNoBanco({
           peso,
           altura,
           largura,
-          comprimento
+          comprimento,
+          variacao_id,
+          variacao_nome,
+          variacao_imagem
         )
         VALUES (
           $1, $2, $3, $4, $5, $6,
-          $7, $8, $9, $10, $11, $12
+          $7, $8, $9, $10, $11, $12,
+          $13, $14, $15
         )
         `,
         [
@@ -261,6 +338,9 @@ async function criarPedidoNoBanco({
           item.altura,
           item.largura,
           item.comprimento,
+          item.variacaoId,
+          item.variacaoNome,
+          item.variacaoImagem,
         ],
       );
     }
