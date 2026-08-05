@@ -832,6 +832,17 @@ export default function Home() {
                 <strong>{formatPrice(selectedProduct.price)}</strong>
               </div>
 
+              <div className="modal-unit-price-notice">
+                <ShoppingBag size={18} />
+                <div>
+                  <strong>Preço por unidade</strong>
+                  <span>
+                    Fotos com vários itens são ilustrativas. O valor informado
+                    corresponde a uma unidade.
+                  </span>
+                </div>
+              </div>
+
               <div className="quantity-area">
                 <span>Quantidade</span>
 

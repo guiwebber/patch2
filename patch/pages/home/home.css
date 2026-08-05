@@ -3021,6 +3021,115 @@ input {
   }
 }
 
+/* Aviso de preço unitário dentro do modal */
+.modal-price {
+  flex-wrap: wrap;
+}
+
+.modal-price::after {
+  content: "Preço unitário — imagens com vários itens são ilustrativas.";
+  width: 100%;
+  margin-top: 2px;
+  color: #a99d98;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .modal-price::after {
+    font-size: 9px;
+  }
+}
+
+/* Cards informativos do modal — produção e preço unitário */
+.modal-price::after {
+  content: none;
+}
+
+.modal-unit-price-notice {
+  margin-top: 12px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #d8c5b9;
+  background: rgba(127, 29, 51, 0.16);
+  border: 1px solid rgba(210, 111, 134, 0.42);
+  border-radius: 14px;
+}
+
+.modal-unit-price-notice > svg {
+  flex-shrink: 0;
+  color: #df8298;
+}
+
+.modal-unit-price-notice strong,
+.modal-unit-price-notice span {
+  display: block;
+}
+
+.modal-unit-price-notice strong {
+  color: #ead9df;
+  font-size: 13px;
+}
+
+.modal-unit-price-notice span {
+  margin-top: 3px;
+  color: #b8aaa6;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 850px) {
+  .modal-production-time {
+    margin-top: 12px;
+    padding: 11px 12px;
+    display: flex;
+  }
+
+  .modal-production-time strong,
+  .modal-unit-price-notice strong {
+    font-size: 12px;
+  }
+
+  .modal-production-time span,
+  .modal-unit-price-notice span {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .modal-unit-price-notice {
+    margin-top: 9px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-production-time,
+  .modal-unit-price-notice {
+    gap: 8px;
+    border-radius: 11px;
+  }
+
+  .modal-production-time {
+    margin-top: 10px;
+    padding: 9px 10px;
+  }
+
+  .modal-unit-price-notice {
+    margin-top: 8px;
+    padding: 9px 10px;
+  }
+
+  .modal-production-time > svg,
+  .modal-unit-price-notice > svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* =========================================================
    HERO MAIS COMPACTO — mantém uma área maior da foto visível
    ========================================================= */
