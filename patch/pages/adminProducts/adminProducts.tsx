@@ -438,7 +438,7 @@ export default function AdminProducts() {
         );
       }
 
-      sessionStorage.removeItem("sonia-ferraz:products-cache-v2");
+      sessionStorage.removeItem("sonia-ferraz:products-cache-v4");
       setMensagem(data.mensagem || "Produto salvo com sucesso.");
       setModalAberto(false);
       await carregar();

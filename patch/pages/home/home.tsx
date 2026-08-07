@@ -29,7 +29,8 @@ import "./home.css";
 
 const PENDING_ACTION_KEY = "patchwork:pending-action";
 const PRODUCTS_CACHE_KEY = "sonia-ferraz:products-cache-v4";
-const PRODUCTS_CACHE_TIME = 10 * 60 * 1000;
+const PRODUCTS_CACHE_TIME =
+30 * 1000;
 
 type ProductsCache = {
   products: Product[];
